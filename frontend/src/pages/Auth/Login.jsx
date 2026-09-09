@@ -15,10 +15,10 @@ function Login() {
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#f7fbff] px-4 py-16 sm:px-6 lg:px-8">
-      
+
       {/* Background Glow */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        
+
         <div className="absolute -left-32 top-10 h-72 w-72 rounded-full bg-blue-300/30 blur-3xl" />
 
         <div className="absolute -right-32 bottom-10 h-96 w-96 rounded-full bg-sky-200/40 blur-3xl" />
@@ -35,7 +35,7 @@ function Login() {
       </div>
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-8rem)] max-w-6xl items-center justify-center">
-        
+
         <motion.div
           initial={{ opacity: 0, y: 35 }}
           animate={{ opacity: 1, y: 0 }}
@@ -45,7 +45,7 @@ function Login() {
           }}
           className="grid w-full max-w-5xl overflow-hidden rounded-3xl border border-white/80 bg-white/60 shadow-[0_20px_60px_rgba(37,99,235,0.12)] backdrop-blur-xl lg:grid-cols-2"
         >
-          
+
           {/* Left Side */}
           <div className="relative hidden overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-blue-900 p-12 text-white lg:flex lg:flex-col lg:justify-between">
 
@@ -57,7 +57,7 @@ function Login() {
             {/* Brand */}
             <div className="relative z-10">
               <div className="mb-8 flex items-center gap-3">
-                
+
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/10 backdrop-blur-md">
                   <ShieldCheck className="h-6 w-6 text-blue-300" />
                 </div>
@@ -97,12 +97,12 @@ function Login() {
 
           {/* Right Side - Form */}
           <div className="bg-white/50 p-8 sm:p-12">
-            
+
             <div className="mx-auto max-w-md">
-              
+
               {/* Mobile Logo */}
               <div className="mb-8 flex items-center gap-3 lg:hidden">
-                
+
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-900 to-blue-700 shadow-lg">
                   <ShieldCheck className="h-6 w-6 text-white" />
                 </div>
@@ -120,7 +120,7 @@ function Login() {
 
               {/* Heading */}
               <div className="mb-8">
-                
+
                 <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50/80 px-4 py-2 text-sm font-semibold text-blue-700">
                   <span className="h-2 w-2 rounded-full bg-blue-600" />
                   SECURE LOGIN
@@ -149,7 +149,7 @@ function Login() {
                   </label>
 
                   <div className="relative">
-                    
+
                     <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
                     <input
@@ -164,7 +164,7 @@ function Login() {
                 {/* Password */}
                 <div>
                   <div className="mb-2 flex items-center justify-between">
-                    
+
                     <label
                       htmlFor="password"
                       className="text-sm font-semibold text-slate-700"
@@ -172,16 +172,17 @@ function Login() {
                       Password
                     </label>
 
-                    <button
-                      type="button"
+                    <Link
+                      to="/forgot-password"
                       className="text-sm font-medium text-blue-700 transition-colors hover:text-slate-900"
+                      
                     >
                       Forgot Password?
-                    </button>
+                    </Link>
                   </div>
 
                   <div className="relative">
-                    
+
                     <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
 
                     <input
@@ -212,7 +213,7 @@ function Login() {
 
                 {/* Remember Me */}
                 <label className="flex cursor-pointer items-center gap-3 text-sm text-slate-600">
-                  
+
                   <input
                     type="checkbox"
                     className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
@@ -235,7 +236,7 @@ function Login() {
 
               {/* Divider */}
               <div className="my-8 flex items-center gap-4">
-                
+
                 <div className="h-px flex-1 bg-slate-200" />
 
                 <span className="text-sm text-slate-400">

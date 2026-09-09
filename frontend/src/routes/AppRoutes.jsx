@@ -11,6 +11,10 @@ import Login from "../pages/Auth/Login";
 import Signup from "../pages/Auth/Signup";
 import VerifyEmail from "../pages/Auth/VerifyEmail";
 
+import ForgotPassword from "../pages/Auth/ForgotPassword";
+import VerifyResetOTP from "../pages/Auth/VerifyResetOTP";
+import ResetPassword from "../pages/Auth/ResetPassword";
+
 import MyProfile from "../pages/Profile/MyProfile";
 import MyQueries from "../pages/Queries/MyQueries";
 import QueryDetails from "../pages/MyQueries/QueryDetails";
@@ -91,6 +95,23 @@ function AppRoutes() {
         path="/verify-email"
         element={<VerifyEmail />}
       />
+
+
+      <Route
+        path="/forgot-password"
+        element={<ForgotPassword />}
+      />
+
+      <Route
+        path="/verify-reset-otp"
+        element={<VerifyResetOTP />}
+      />
+
+      <Route
+        path="/reset-password"
+        element={<ResetPassword />}
+      />
+
 
 
       {/* ================= NORMAL USER ROUTES ================= */}
