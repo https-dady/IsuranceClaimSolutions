@@ -48,6 +48,47 @@ const userSchema = new mongoose.Schema(
             type: Date
         },
 
+        /*
+        =========================================================
+        PHONE VERIFICATION
+        =========================================================
+
+        Provider integration will be added after the
+        SMS/WhatsApp OTP provider is finalized.
+        =========================================================
+        */
+
+        phoneVerified: {
+            type: Boolean,
+            default: false
+        },
+
+        /*
+        =========================================================
+        PROFILE PHOTO
+        =========================================================
+
+        Actual image:
+            -> Cloudinary
+
+        MongoDB stores only:
+            -> Cloudinary secure URL
+            -> Cloudinary public ID
+        =========================================================
+        */
+
+        profilePhotoUrl: {
+            type: String,
+            default: null,
+            trim: true
+        },
+
+        profilePhotoPublicId: {
+            type: String,
+            default: null,
+            trim: true
+        },
+
         type: {
             type: String,
             enum: ["user", "admin"],
