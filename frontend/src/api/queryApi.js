@@ -78,3 +78,53 @@ export const getMyQueryById = (queryId) => {
     }
   );
 };
+
+export const getAdminQueries = (queryString = "") => {
+  const endpoint = queryString
+    ? `/api/queries/admin?${queryString}`
+    : "/api/queries/admin";
+
+  return apiClient(endpoint, {
+    method: "GET",
+  });
+};
+
+export const getAdminQueryById = (queryId) => {
+  return apiClient(
+    `/api/queries/admin/${encodeURIComponent(queryId)}`,
+    {
+      method: "GET",
+    }
+  );
+};
+
+export const assignQuery = (queryId, adminId) => {
+  return apiClient(
+    `/api/queries/admin/${encodeURIComponent(queryId)}/assign`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        adminId,
+      }),
+    }
+  );
+};
+
+export const unassignQuery = (queryId) => {
+  return apiClient(
+    `/api/queries/admin/${encodeURIComponent(queryId)}/unassign`,
+    {
+      method: "PATCH",
+    }
+  );
+};
+
+export const updateQuery = (queryId, payload) => {
+  return apiClient(
+    `/api/queries/admin/${encodeURIComponent(queryId)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }
+  );
+};

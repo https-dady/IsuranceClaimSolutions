@@ -63,9 +63,13 @@ export function AuthProvider({ children }) {
 
   const isAdmin = user?.type === "admin";
 
-  const isMainAdmin =
-    user?.type === "admin" &&
-    user?.role === "main_admin";
+const isSecondaryAdmin =
+  user?.type === "admin" &&
+  user?.role === "secondary_admin";
+
+const isMainAdmin =
+  user?.type === "admin" &&
+  user?.role === "main_admin";
 
   const value = {
     user,
@@ -73,6 +77,7 @@ export function AuthProvider({ children }) {
     isLoading,
     isAuthenticated,
     isAdmin,
+    isSecondaryAdmin,
     isMainAdmin,
     loginUser,
     logoutUser,

@@ -13,122 +13,9 @@ import {
 import { Link } from "react-router-dom";
 
 import AdminLayout from "../../components/layout/AdminLayout";
-import { currentUser } from "../../utils/currentUser";
-
-const stats = [
-  {
-    title: "Total Queries",
-    value: "248",
-    change: "+12.5%",
-    description: "From all submitted claims",
-    icon: ClipboardList,
-    iconBg: "bg-blue-50",
-    iconColor: "text-blue-600",
-    changeColor: "text-emerald-600",
-  },
-  {
-    title: "Pending Review",
-    value: "32",
-    change: "Needs attention",
-    description: "Waiting for initial review",
-    icon: Clock3,
-    iconBg: "bg-amber-50",
-    iconColor: "text-amber-600",
-    changeColor: "text-amber-600",
-  },
-  {
-    title: "Under Review",
-    value: "64",
-    change: "+8 this week",
-    description: "Currently being processed",
-    icon: SearchCheck,
-    iconBg: "bg-purple-50",
-    iconColor: "text-purple-600",
-    changeColor: "text-purple-600",
-  },
-  {
-    title: "Assigned Queries",
-    value: "47",
-    change: "+6 today",
-    description: "Currently assigned to admins",
-    icon: UserCheck,
-    iconBg: "bg-cyan-50",
-    iconColor: "text-cyan-600",
-    changeColor: "text-cyan-600",
-  },
-  {
-    title: "Resolved Claims",
-    value: "105",
-    change: "+18.2%",
-    description: "Successfully completed",
-    icon: CheckCircle2,
-    iconBg: "bg-emerald-50",
-    iconColor: "text-emerald-600",
-    changeColor: "text-emerald-600",
-  },
-];
-
-const recentQueries = [
-  {
-    id: "CLM-2026-001",
-    user: "Rahul Sharma",
-    type: "Health Insurance",
-    amount: "₹2,50,000",
-    status: "Pending Review",
-    date: "Today, 10:30 AM",
-  },
-  {
-    id: "CLM-2026-002",
-    user: "Priya Verma",
-    type: "Motor Insurance",
-    amount: "₹1,80,000",
-    status: "Under Review",
-    date: "Today, 09:45 AM",
-  },
-  {
-    id: "CLM-2026-003",
-    user: "Amit Patel",
-    type: "Life Insurance",
-    amount: "₹8,00,000",
-    status: "Assigned",
-    date: "Yesterday",
-  },
-  {
-    id: "CLM-2026-004",
-    user: "Sneha Gupta",
-    type: "Property Insurance",
-    amount: "₹4,50,000",
-    status: "Resolved",
-    date: "Yesterday",
-  },
-];
-
-const statusOverview = [
-  {
-    name: "Pending Review",
-    count: 32,
-    percentage: 24,
-    color: "bg-amber-500",
-  },
-  {
-    name: "Under Review",
-    count: 64,
-    percentage: 48,
-    color: "bg-purple-500",
-  },
-  {
-    name: "Assigned",
-    count: 47,
-    percentage: 36,
-    color: "bg-blue-500",
-  },
-  {
-    name: "Resolved",
-    count: 105,
-    percentage: 78,
-    color: "bg-emerald-500",
-  },
-];
+import { useEffect, useState } from "react";
+import { getAdminDashboard } from "../../api/adminApi";
+import { useAuth } from "../../context/AuthContext";
 
 function getStatusStyle(status) {
   const styles = {
@@ -148,12 +35,190 @@ function getStatusStyle(status) {
   return styles[status] || "bg-slate-100 text-slate-600";
 }
 
+function formatAmount(amount) {
+  if (amount === null || amount === undefined || amount === "") {
+    return "—";
+  }
+
+  const numericAmount = Number(amount);
+
+  if (Number.isNaN(numericAmount)) {
+    return String(amount);
+  }
+
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(numericAmount);
+}
+
+function formatDate(date) {
+  if (!date) return "—";
+
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return "—";
+  }
+
+  return parsedDate.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function normalizeRecentStatus(status, assignedTo) {
+  if (assignedTo) return "Assigned";
+
+  const statusMap = {
+    "Query Submitted": "Pending Review",
+    "Under Initial Review": "Under Review",
+    "Document Review": "Under Review",
+    "Claim Processing": "Under Review",
+    Resolution: "Resolved",
+  };
+
+  return statusMap[status] || status || "—";
+}
+
 function AdminDashboard() {
-  const isMainAdmin = currentUser.role === "main_admin";
+  const { user, isMainAdmin } = useAuth();
+  const [dashboard, setDashboard] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadDashboard = async () => {
+      try {
+        setIsLoading(true);
+        setError("");
+
+        const response = await getAdminDashboard();
+
+        if (isMounted) {
+          setDashboard(response);
+        }
+      } catch (requestError) {
+        console.error("Failed to load admin dashboard:", requestError);
+
+        if (isMounted) {
+          setError(
+            requestError?.message ||
+              "Unable to load dashboard data. Please try again."
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadDashboard();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const stats = [
+    {
+      title: "Total Queries",
+      value: dashboard?.stats?.totalQueries ?? 0,
+      change: "",
+      description: "From all submitted claims",
+      icon: ClipboardList,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-600",
+      changeColor: "text-emerald-600",
+    },
+    {
+      title: "Pending Review",
+      value: dashboard?.stats?.pendingReview ?? 0,
+      change: "Needs attention",
+      description: "Waiting for initial review",
+      icon: Clock3,
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-600",
+      changeColor: "text-amber-600",
+    },
+    {
+      title: "Under Review",
+      value: dashboard?.stats?.underReview ?? 0,
+      change: "",
+      description: "Currently being processed",
+      icon: SearchCheck,
+      iconBg: "bg-purple-50",
+      iconColor: "text-purple-600",
+      changeColor: "text-purple-600",
+    },
+    {
+      title: "Assigned Queries",
+      value: dashboard?.stats?.assignedQueries ?? 0,
+      change: "",
+      description: "Currently assigned to admins",
+      icon: UserCheck,
+      iconBg: "bg-cyan-50",
+      iconColor: "text-cyan-600",
+      changeColor: "text-cyan-600",
+    },
+    {
+      title: "Resolved Claims",
+      value: dashboard?.stats?.resolvedClaims ?? 0,
+      change: "",
+      description: "Successfully completed",
+      icon: CheckCircle2,
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+      changeColor: "text-emerald-600",
+    },
+  ];
+
+  const recentQueries = (dashboard?.recentQueries || []).map((query) => ({
+    ...query,
+    type: query.type || "—",
+    amount: formatAmount(query.amount),
+    status: normalizeRecentStatus(query.status, query.assignedTo),
+    date: formatDate(query.date),
+  }));
+
+  const statusOverview = (dashboard?.statusOverview || []).map((status) => {
+    const colorMap = {
+      "Pending Review": "bg-amber-500",
+      "Under Review": "bg-purple-500",
+      Assigned: "bg-blue-500",
+      Resolved: "bg-emerald-500",
+    };
+
+    return {
+      name: status.label,
+      count: status.count,
+      percentage: status.percentage,
+      color: colorMap[status.label] || "bg-slate-500",
+    };
+  });
 
   return (
     <AdminLayout>
       <div className="mx-auto max-w-7xl">
+
+        {error && (
+          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-700">
+            Loading live dashboard data...
+          </div>
+        )}
 
         {/* ================= PAGE HEADING ================= */}
 
@@ -169,7 +234,7 @@ function AdminDashboard() {
             </div>
 
             <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-              Welcome back, {currentUser.name} 👋
+              Welcome back, {user?.name || "Admin"} 👋
             </h1>
 
             <p className="mt-2 text-slate-500">
@@ -491,7 +556,7 @@ function AdminDashboard() {
 
                 <div>
                   <p className="text-sm font-semibold text-blue-900">
-                    32 queries need attention
+                    {dashboard?.stats?.pendingReview ?? 0} queries need attention
                   </p>
 
                   <p className="mt-1 text-xs leading-relaxed text-blue-700">

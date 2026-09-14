@@ -14,7 +14,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 
-import { currentUser } from "../../utils/currentUser";
+import { useAuth } from "../../context/AuthContext";
 
 const menuItems = [
   {
@@ -51,8 +51,7 @@ const menuItems = [
 
 function AdminSidebar({ isOpen, setIsOpen }) {
   const location = useLocation();
-
-  const isMainAdmin = currentUser.role === "main_admin";
+  const { user, isMainAdmin, logoutUser } = useAuth();
 
   // ================= ACTIVE MENU =================
 
@@ -81,7 +80,7 @@ function AdminSidebar({ isOpen, setIsOpen }) {
 
   // ================= ADMIN INITIALS =================
 
-  const adminInitials = currentUser.name
+  const adminInitials = (user?.name || "Admin")
     .split(" ")
     .map((word) => word.charAt(0))
     .join("")
@@ -154,7 +153,7 @@ function AdminSidebar({ isOpen, setIsOpen }) {
 
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-slate-900">
-                {currentUser.name}
+                {user?.name || "Admin"}
               </p>
 
               <div className="mt-0.5 flex items-center gap-1">
@@ -275,7 +274,10 @@ function AdminSidebar({ isOpen, setIsOpen }) {
 
           {/* Logout */}
 
-          <button className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-red-500 transition-colors hover:bg-red-50">
+          <button
+            onClick={logoutUser}
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
+          >
             <LogOut className="h-5 w-5" />
 
             <span>Logout</span>

@@ -14,7 +14,7 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 
-import { currentUser } from "../../utils/currentUser";
+import { useAuth } from "../../context/AuthContext";
 
 const navLinks = [
   {
@@ -51,29 +51,22 @@ const navLinks = [
 
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  // Temporary login state
-  // Current user data comes from currentUser.js
-  const [user, setUser] = useState(currentUser);
-
   const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const location = useLocation();
 
-  // ================= ROLE CHECKS =================
-
-  const isAdmin = user?.type === "admin";
-
-  const isSecondaryAdmin =
-    isAdmin && user?.role === "secondary_admin";
-
-  const isMainAdmin =
-    isAdmin && user?.role === "main_admin";
+  const {
+    user,
+    isAdmin,
+    isSecondaryAdmin,
+    isMainAdmin,
+    logoutUser,
+  } = useAuth();
 
   const isActive = (path) => location.pathname === path;
 
   const handleLogout = () => {
-    setUser(null);
+    logoutUser();
     setIsProfileOpen(false);
     setIsMenuOpen(false);
   };
@@ -176,12 +169,12 @@ function Navbar() {
                 </Link>
               </>
             ) : (
-
               <div
                 className="relative"
                 onMouseEnter={() => setIsProfileOpen(true)}
                 onMouseLeave={() => setIsProfileOpen(false)}
               >
+
                 {/* ================= USER BUTTON ================= */}
 
                 <button
@@ -192,16 +185,16 @@ function Navbar() {
                   className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white/70 py-1.5 pl-2 pr-3 shadow-sm backdrop-blur-xl transition-all duration-300 hover:border-blue-200 hover:bg-blue-50"
                 >
                   <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-slate-900 to-blue-600 text-sm font-bold text-white shadow-md">
-                    {user.name.charAt(0).toUpperCase()}
+                    {user?.name?.charAt(0)?.toUpperCase() || "U"}
                   </div>
 
                   <div className="hidden text-left xl:block">
                     <p className="max-w-[120px] truncate text-sm font-semibold text-slate-800">
-                      {user.name}
+                      {user?.name || "User"}
                     </p>
 
                     <p className="max-w-[140px] truncate text-xs text-slate-500">
-                      {user.email || ""}
+                      {user?.email || ""}
                     </p>
                   </div>
 
@@ -241,27 +234,24 @@ function Navbar() {
                       {/* ================= USER INFO ================= */}
 
                       <div className="border-b border-slate-100 p-5">
-
                         <div className="flex items-center gap-3">
 
                           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-900 to-blue-600 font-bold text-white">
-                            {user.name.charAt(0).toUpperCase()}
+                            {user?.name?.charAt(0)?.toUpperCase() || "U"}
                           </div>
 
                           <div className="min-w-0">
 
                             <p className="truncate font-semibold text-slate-900">
-                              {user.name}
+                              {user?.name || "User"}
                             </p>
 
                             <p className="truncate text-sm text-slate-500">
-                              {user.email || ""}
+                              {user?.email || ""}
                             </p>
 
                           </div>
-
                         </div>
-
                       </div>
 
                       {/* ================= DROPDOWN LINKS ================= */}
@@ -551,17 +541,17 @@ function Navbar() {
                     <div className="mb-3 flex items-center gap-3 px-3">
 
                       <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-slate-900 to-blue-600 font-bold text-white">
-                        {user.name.charAt(0).toUpperCase()}
+                        {user?.name?.charAt(0)?.toUpperCase() || "U"}
                       </div>
 
                       <div className="min-w-0">
 
                         <p className="truncate font-semibold text-slate-900">
-                          {user.name}
+                          {user?.name || "User"}
                         </p>
 
                         <p className="truncate text-sm text-slate-500">
-                          {user.email || ""}
+                          {user?.email || ""}
                         </p>
 
                       </div>

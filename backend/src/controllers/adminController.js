@@ -111,6 +111,32 @@ const removeSecondaryAdmin = async (req, res) => {
             });
         }
 
+        /*
+        =====================================================
+        UNASSIGN ALL QUERIES
+        =====================================================
+
+        When a Secondary Admin is removed, all queries
+        assigned to that admin become unassigned.
+        */
+
+        await Query.updateMany(
+            {
+                assignedAdmin: user._id
+            },
+            {
+                $set: {
+                    assignedAdmin: null
+                }
+            }
+        );
+
+        /*
+        =====================================================
+        REMOVE ADMIN ACCESS
+        =====================================================
+        */
+
         user.type = "user";
         user.role = "user";
 

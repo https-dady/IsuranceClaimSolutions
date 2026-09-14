@@ -1,21 +1,21 @@
-// ============================================
-// TEMPORARY CURRENT USER
-// ============================================
+// // ============================================
+// // TEMPORARY CURRENT USER
+// // ============================================
 
-// Secondary Admin test karna ho:
-// export const currentUser = {
-//   id: 2,
-//   name: "Secondary Admin",
-//   type: "admin",
-//   role: "secondary_admin",
-// };
+// // Secondary Admin test karna ho:
+// // export const currentUser = {
+// //   id: 2,
+// //   name: "Secondary Admin",
+// //   type: "admin",
+// //   role: "secondary_admin",
+// // };
 
-// ============================================
-// MAIN ADMIN TEST
-// ============================================
+// // ============================================
+// // MAIN ADMIN TEST
+// // ============================================
 
-// Main Admin test karne ke liye upar wale
-// currentUser ko replace karke ye use karna:
+// // Main Admin test karne ke liye upar wale
+// // currentUser ko replace karke ye use karna:
 
 // export const currentUser = {
 //   id: 1,
@@ -25,13 +25,13 @@
 // };
 
 
-// ============================================
-// NORMAL USER TEST
-// ============================================
+// // ============================================
+// // NORMAL USER TEST
+// // ============================================
 
- export const currentUser = {
-   id: 101,
-   name: "Normal User",
-   type: "user",
-   role: "user",
- };
+// //  export const currentUser = {
+// //    id: 101,
+// //    name: "Normal User",
+// //    type: "user",
+// //    role: "user",
+// //  };

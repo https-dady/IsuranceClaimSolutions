@@ -20,6 +20,7 @@ import MyQueries from "../pages/Queries/MyQueries";
 import QueryDetails from "../pages/MyQueries/QueryDetails";
 import MyDocuments from "../pages/MyDocuments/MyDocuments";
 import MyFeedbacks from "../pages/MyFeedbacks/MyFeedbacks";
+import EditFeedback from "../pages/Feedback/EditFeedback";
 
 import AdminDashboard from "../pages/Admin/AdminDashboard";
 import AdminQueries from "../pages/Admin/AdminQueries";
@@ -132,7 +133,12 @@ function AppRoutes() {
           element={<MyFeedbacks />}
         />
 
+        <Route
+          path="/feedback/edit/:id"
+          element={<EditFeedback />}
+        />
       </Route>
+
 
 
       {/* ================= ADMIN ROUTES ================= */}

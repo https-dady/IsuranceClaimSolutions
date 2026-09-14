@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   MessageSquarePlus,
@@ -10,37 +10,109 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 
-const feedbacks = [
-  {
-    id: 1,
-    subject: "Excellent Claim Support",
-    regarding: "Health Insurance Claim",
-    queryId: "ICS-2026-1024",
-    rating: 5,
-    message:
-      "The team was very supportive and guided me throughout the claim process. I really appreciate the quick responses and professional assistance.",
-    date: "September 5, 2026",
-  },
-  {
-    id: 2,
-    subject: "Good Overall Experience",
-    regarding: "Motor Insurance Claim",
-    queryId: "ICS-2026-0897",
-    rating: 4,
-    message:
-      "The process was smooth and the team explained everything clearly. The response time could be slightly faster, but overall the experience was good.",
-    date: "August 28, 2026",
-  },
-];
+import { getMyFeedbacks } from "../../api/feedbackApi";
 
 function MyFeedbacks() {
-  const [userFeedbacks] = useState(feedbacks);
+  const [userFeedbacks, setUserFeedbacks] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const fetchFeedbacks = async () => {
+      try {
+        setIsLoading(true);
+        setError("");
+
+        const response = await getMyFeedbacks();
+
+        const feedbackList =
+          response?.feedbacks ||
+          response?.data?.feedbacks ||
+          [];
+
+        setUserFeedbacks(
+          Array.isArray(feedbackList) ? feedbackList : []
+        );
+      } catch (error) {
+        console.error("Get my feedbacks error:", error);
+
+        setError(
+          error?.message ||
+            "Failed to load your feedbacks."
+        );
+
+        setUserFeedbacks([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchFeedbacks();
+  }, []);
+
+  const formatDate = (date) => {
+    if (!date) {
+      return "—";
+    }
+
+    const parsedDate = new Date(date);
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return "—";
+    }
+
+    return parsedDate.toLocaleDateString("en-IN", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const getQueryId = (feedback) => {
+    if (typeof feedback?.query === "string") {
+      return feedback.query;
+    }
+
+    return (
+      feedback?.query?.queryId ||
+      feedback?.queryId ||
+      "—"
+    );
+  };
+
+  const getQueryTitle = (feedback) => {
+    return (
+      feedback?.query?.insuranceDetails?.insuranceType ||
+      feedback?.query?.queryDetails?.issueType ||
+      feedback?.queryTitle ||
+      feedback?.subject ||
+      "Insurance Claim"
+    );
+  };
+
+  const getFeedbackId = (feedback) => {
+    return feedback?._id || feedback?.id;
+  };
+
+  const latestFeedback = userFeedbacks[0];
+
+  const averageRating =
+    userFeedbacks.length > 0
+      ? (
+          userFeedbacks.reduce(
+            (total, feedback) =>
+              total + Number(feedback.rating || 0),
+            0
+          ) / userFeedbacks.length
+        ).toFixed(1)
+      : "0.0";
 
   return (
     <section className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/70 py-12 sm:py-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         {/* ================= HEADER ================= */}
+
         <motion.div
           initial={{ opacity: 0, y: 25 }}
           animate={{ opacity: 1, y: 0 }}
@@ -63,6 +135,7 @@ function MyFeedbacks() {
           </div>
 
           {/* New Feedback Button */}
+
           <Link to="/feedback">
             <motion.div
               whileHover={{ y: -2 }}
@@ -75,9 +148,49 @@ function MyFeedbacks() {
           </Link>
         </motion.div>
 
+        {/* ================= LOADING ================= */}
+
+        {isLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="rounded-3xl border border-white/80 bg-white/70 px-6 py-16 text-center shadow-xl shadow-blue-900/5 backdrop-blur-xl"
+          >
+            <div className="mx-auto mb-5 h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600" />
+
+            <h2 className="text-xl font-bold text-slate-900">
+              Loading Feedbacks...
+            </h2>
+
+            <p className="mt-2 text-slate-500">
+              Please wait while we fetch your feedbacks.
+            </p>
+          </motion.div>
+        )}
+
+        {/* ================= ERROR ================= */}
+
+        {!isLoading && error && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-3xl border border-red-100 bg-red-50/80 px-6 py-12 text-center shadow-lg"
+          >
+            <MessageSquare className="mx-auto h-10 w-10 text-red-400" />
+
+            <h2 className="mt-4 text-xl font-bold text-red-800">
+              Unable to Load Feedbacks
+            </h2>
+
+            <p className="mx-auto mt-2 max-w-lg text-sm text-red-700">
+              {error}
+            </p>
+          </motion.div>
+        )}
+
         {/* ================= EMPTY STATE ================= */}
 
-        {userFeedbacks.length === 0 ? (
+        {!isLoading && !error && userFeedbacks.length === 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -98,14 +211,18 @@ function MyFeedbacks() {
             </p>
 
             <Link
-              to="/feedback/new"
+              to="/feedback"
               className="mt-7 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white shadow-lg shadow-blue-500/20 transition-colors hover:bg-blue-700"
             >
               <MessageSquarePlus className="h-5 w-5" />
               Give Your Feedback
             </Link>
           </motion.div>
-        ) : (
+        )}
+
+        {/* ================= FEEDBACK DATA ================= */}
+
+        {!isLoading && !error && userFeedbacks.length > 0 && (
           <>
             {/* ================= SUMMARY ================= */}
 
@@ -132,13 +249,7 @@ function MyFeedbacks() {
 
                 <div className="mt-2 flex items-center gap-2">
                   <p className="text-3xl font-bold text-slate-900">
-                    {(
-                      userFeedbacks.reduce(
-                        (total, feedback) =>
-                          total + feedback.rating,
-                        0
-                      ) / userFeedbacks.length
-                    ).toFixed(1)}
+                    {averageRating}
                   </p>
 
                   <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
@@ -151,7 +262,7 @@ function MyFeedbacks() {
                 </p>
 
                 <p className="mt-2 truncate text-lg font-bold text-slate-900">
-                  {userFeedbacks[0].regarding}
+                  {getQueryTitle(latestFeedback)}
                 </p>
               </div>
             </motion.div>
@@ -159,82 +270,100 @@ function MyFeedbacks() {
             {/* ================= FEEDBACK LIST ================= */}
 
             <div className="space-y-6">
-              {userFeedbacks.map((feedback, index) => (
-                <motion.div
-                  key={feedback.id}
-                  initial={{ opacity: 0, y: 25 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.45,
-                    delay: 0.15 + index * 0.1,
-                  }}
-                  className="group rounded-3xl border border-white/80 bg-white/75 p-6 shadow-lg shadow-blue-900/5 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-7"
-                >
-                  <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+              {userFeedbacks.map((feedback, index) => {
+                const feedbackId = getFeedbackId(feedback);
+                const queryId = getQueryId(feedback);
+                const queryTitle = getQueryTitle(feedback);
 
-                    {/* LEFT CONTENT */}
-                    <div className="flex-1">
+                return (
+                  <motion.div
+                    key={feedbackId || index}
+                    initial={{ opacity: 0, y: 25 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      duration: 0.45,
+                      delay: 0.15 + index * 0.1,
+                    }}
+                    className="group rounded-3xl border border-white/80 bg-white/75 p-6 shadow-lg shadow-blue-900/5 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-xl sm:p-7"
+                  >
+                    <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
 
-                      {/* Rating + Date */}
-                      <div className="mb-4 flex flex-wrap items-center gap-3">
-                        <div className="flex items-center gap-1">
-                          {[...Array(5)].map((_, starIndex) => (
-                            <Star
-                              key={starIndex}
-                              className={`h-5 w-5 ${
-                                starIndex < feedback.rating
-                                  ? "fill-yellow-400 text-yellow-400"
-                                  : "text-slate-200"
-                              }`}
-                            />
-                          ))}
+                      {/* LEFT CONTENT */}
+
+                      <div className="flex-1">
+
+                        {/* Rating + Date */}
+
+                        <div className="mb-4 flex flex-wrap items-center gap-3">
+                          <div className="flex items-center gap-1">
+                            {[...Array(5)].map((_, starIndex) => (
+                              <Star
+                                key={starIndex}
+                                className={`h-5 w-5 ${
+                                  starIndex < Number(feedback.rating)
+                                    ? "fill-yellow-400 text-yellow-400"
+                                    : "text-slate-200"
+                                }`}
+                              />
+                            ))}
+                          </div>
+
+                          <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+
+                          <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                            <CalendarDays className="h-4 w-4" />
+                            {formatDate(
+                              feedback.createdAt ||
+                                feedback.submittedAt ||
+                                feedback.date
+                            )}
+                          </div>
                         </div>
 
-                        <span className="h-1.5 w-1.5 rounded-full bg-slate-300" />
+                        {/* Subject */}
 
-                        <div className="flex items-center gap-1.5 text-sm text-slate-500">
-                          <CalendarDays className="h-4 w-4" />
-                          {feedback.date}
+                        <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
+                          {queryTitle}
+                        </h2>
+
+                        {/* Regarding */}
+
+                        <div className="mt-4 flex flex-wrap items-center gap-3">
+                          <div className="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700">
+                            <ClipboardList className="h-4 w-4" />
+                            {queryTitle}
+                          </div>
+
+                          <span className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600">
+                            Query ID: {queryId}
+                          </span>
                         </div>
+
+                        {/* Feedback Message */}
+
+                        <p className="mt-5 max-w-4xl leading-relaxed text-slate-600">
+                          {feedback.message}
+                        </p>
                       </div>
 
-                      {/* Subject */}
-                      <h2 className="text-xl font-bold text-slate-900 sm:text-2xl">
-                        {feedback.subject}
-                      </h2>
+                      {/* EDIT BUTTON */}
 
-                      {/* Regarding */}
-                      <div className="mt-4 flex flex-wrap items-center gap-3">
-                        <div className="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700">
-                          <ClipboardList className="h-4 w-4" />
-                          {feedback.regarding}
-                        </div>
-
-                        <span className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600">
-                          Query ID: {feedback.queryId}
-                        </span>
-                      </div>
-
-                      {/* Feedback Message */}
-                      <p className="mt-5 max-w-4xl leading-relaxed text-slate-600">
-                        {feedback.message}
-                      </p>
+                      {feedbackId && (
+                        <Link to={`/feedback/edit/${feedbackId}`}>
+                          <motion.div
+                            whileHover={{ y: -2 }}
+                            whileTap={{ scale: 0.97 }}
+                            className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm font-semibold text-blue-600 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50"
+                          >
+                            <Pencil className="h-4 w-4" />
+                            Edit Feedback
+                          </motion.div>
+                        </Link>
+                      )}
                     </div>
-
-                    {/* EDIT BUTTON */}
-                    <Link to={`/feedback/edit/${feedback.id}`}>
-                      <motion.div
-                        whileHover={{ y: -2 }}
-                        whileTap={{ scale: 0.97 }}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm font-semibold text-blue-600 shadow-sm transition-all hover:border-blue-200 hover:bg-blue-50"
-                      >
-                        <Pencil className="h-4 w-4" />
-                        Edit Feedback
-                      </motion.div>
-                    </Link>
-                  </div>
-                </motion.div>
-              ))}
+                  </motion.div>
+                );
+              })}
             </div>
           </>
         )}
