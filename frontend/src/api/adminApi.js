@@ -1,10 +1,11 @@
 import apiClient from "./apiClient";
 
-export const getAdminDashboard = () => {
-  return apiClient("/api/admins/dashboard", {
-    method: "GET",
-  });
-};
+
+/*
+=========================================================
+GET ADMINS
+=========================================================
+*/
 
 export const getAdmins = () => {
   return apiClient("/api/admins", {
@@ -12,20 +13,64 @@ export const getAdmins = () => {
   });
 };
 
-export const promoteToSecondaryAdmin = (userId) => {
+
+/*
+=========================================================
+CREATE SECONDARY ADMIN
+=========================================================
+*/
+
+export const createSecondaryAdmin = ({
+  name,
+  email,
+  phone,
+  password,
+  confirmPassword,
+}) => {
   return apiClient(
-    `/api/admins/promote/${encodeURIComponent(userId)}`,
+    "/api/admins/create-secondary-admin",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        name,
+        email,
+        phone,
+        password,
+        confirmPassword,
+      }),
+    }
+  );
+};
+
+
+/*
+=========================================================
+REMOVE SECONDARY ADMIN
+=========================================================
+*/
+
+export const removeSecondaryAdmin = (
+  userId
+) => {
+  return apiClient(
+    `/api/admins/remove/${encodeURIComponent(
+      userId
+    )}`,
     {
       method: "PATCH",
     }
   );
 };
 
-export const removeSecondaryAdmin = (userId) => {
-  return apiClient(
-    `/api/admins/remove/${encodeURIComponent(userId)}`,
-    {
-      method: "PATCH",
-    }
-  );
+
+/*
+=========================================================
+ADMIN DASHBOARD
+=========================================================
+*/
+
+export const getAdminDashboard = () => {
+  return apiClient("/api/admins/dashboard", {
+    method: "GET",
+  });
 };

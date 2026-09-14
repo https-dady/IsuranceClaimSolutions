@@ -1,6 +1,18 @@
+const bcrypt = require("bcryptjs");
+
 const User = require("../models/User");
 const Query = require("../models/Query");
 
+const {
+    sendVerificationOTP
+} = require("../services/emailService");
+
+
+/*
+=========================================================
+GET ADMINS
+=========================================================
+*/
 
 const getAdmins = async (req, res) => {
     try {
@@ -25,6 +37,234 @@ const getAdmins = async (req, res) => {
     }
 };
 
+
+/*
+=========================================================
+CREATE SECONDARY ADMIN
+=========================================================
+
+Main Admin creates a completely new Secondary Admin.
+
+This does NOT use the old promotion flow.
+
+Created account:
+
+type = admin
+role = secondary_admin
+emailVerified = false
+
+The existing email verification OTP flow is reused.
+=========================================================
+*/
+
+const createSecondaryAdmin = async (req, res) => {
+    try {
+        const {
+            name,
+            email,
+            phone,
+            password,
+            confirmPassword
+        } = req.body;
+
+
+        /*
+        =====================================================
+        VALIDATE REQUIRED FIELDS
+        =====================================================
+        */
+
+        if (
+            !name ||
+            !email ||
+            !phone ||
+            !password ||
+            !confirmPassword
+        ) {
+            return res.status(400).json({
+                message: "All fields are required"
+            });
+        }
+
+
+        /*
+        =====================================================
+        PASSWORD CONFIRMATION
+        =====================================================
+        */
+
+        if (password !== confirmPassword) {
+            return res.status(400).json({
+                message: "Passwords do not match"
+            });
+        }
+
+
+        /*
+        =====================================================
+        PASSWORD LENGTH
+        =====================================================
+        */
+
+        if (password.length < 6) {
+            return res.status(400).json({
+                message:
+                    "Password must be at least 6 characters long"
+            });
+        }
+
+
+        /*
+        =====================================================
+        NORMALIZE EMAIL
+        =====================================================
+        */
+
+        const normalizedEmail =
+            email.toLowerCase().trim();
+
+
+        /*
+        =====================================================
+        CHECK EXISTING EMAIL
+        =====================================================
+        */
+
+        const existingUser = await User.findOne({
+            email: normalizedEmail
+        });
+
+        if (existingUser) {
+            return res.status(409).json({
+                message: "Email already registered"
+            });
+        }
+
+
+        /*
+        =====================================================
+        HASH PASSWORD
+        =====================================================
+        */
+
+        const hashedPassword =
+            await bcrypt.hash(password, 10);
+
+
+        /*
+        =====================================================
+        GENERATE EMAIL VERIFICATION OTP
+        =====================================================
+        */
+
+        const otp = Math.floor(
+            100000 + Math.random() * 900000
+        ).toString();
+
+        const otpExpires = new Date(
+            Date.now() + 10 * 60 * 1000
+        );
+
+
+        /*
+        =====================================================
+        CREATE SECONDARY ADMIN
+        =====================================================
+        */
+
+        const admin = await User.create({
+            name: name.trim(),
+            email: normalizedEmail,
+            phone: phone.trim(),
+            password: hashedPassword,
+
+            emailVerified: false,
+
+            emailVerificationOTP: otp,
+            emailVerificationOTPExpires:
+                otpExpires,
+
+            type: "admin",
+            role: "secondary_admin"
+        });
+
+
+        /*
+        =====================================================
+        SEND VERIFICATION OTP
+        =====================================================
+        */
+
+        try {
+            await sendVerificationOTP(
+                admin.email,
+                otp
+            );
+        } catch (emailError) {
+            console.error(
+                "Secondary Admin verification email failed:",
+                emailError
+            );
+
+            /*
+            If email could not be sent, remove the
+            newly-created account so that an unusable
+            admin account is not left in the database.
+            */
+
+            await User.findByIdAndDelete(
+                admin._id
+            );
+
+            return res.status(500).json({
+                message:
+                    "Secondary Admin could not be created because verification email could not be sent."
+            });
+        }
+
+
+        /*
+        =====================================================
+        SUCCESS RESPONSE
+        =====================================================
+        */
+
+        return res.status(201).json({
+            message:
+                "Secondary Admin created successfully. Verification OTP sent to email.",
+
+            userId: admin._id,
+
+            email: admin.email
+        });
+
+    } catch (error) {
+        console.error(
+            "Create Secondary Admin error:",
+            error
+        );
+
+        return res.status(500).json({
+            message: "Something went wrong"
+        });
+    }
+};
+
+
+/*
+=========================================================
+OLD PROMOTION FUNCTION
+=========================================================
+
+Kept here for compatibility with the existing controller.
+
+The new Admin Management frontend will NOT use this
+promotion flow.
+
+New Secondary Admins are created using
+createSecondaryAdmin().
+=========================================================
+*/
 
 const promoteToSecondaryAdmin = async (req, res) => {
     try {
@@ -84,6 +324,12 @@ const promoteToSecondaryAdmin = async (req, res) => {
 };
 
 
+/*
+=========================================================
+REMOVE SECONDARY ADMIN
+=========================================================
+*/
+
 const removeSecondaryAdmin = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -111,6 +357,7 @@ const removeSecondaryAdmin = async (req, res) => {
             });
         }
 
+
         /*
         =====================================================
         UNASSIGN ALL QUERIES
@@ -131,6 +378,7 @@ const removeSecondaryAdmin = async (req, res) => {
             }
         );
 
+
         /*
         =====================================================
         REMOVE ADMIN ACCESS
@@ -146,6 +394,7 @@ const removeSecondaryAdmin = async (req, res) => {
             message:
                 "Secondary Admin access removed successfully"
         });
+
     } catch (error) {
         console.error(
             "Remove Secondary Admin error:",
@@ -229,47 +478,46 @@ const getDashboard = async (req, res) => {
             .limit(4);
 
 
-        const formattedRecentQueries = recentQueries.map(
-            (query) => ({
-                id: query.queryId,
+        const formattedRecentQueries =
+            recentQueries.map(
+                (query) => ({
+                    id: query.queryId,
 
-                user: query.user
-                    ? query.user.name
-                    : "Unknown User",
+                    user: query.user
+                        ? query.user.name
+                        : "Unknown User",
 
-                email: query.user
-                    ? query.user.email
-                    : "",
+                    email: query.user
+                        ? query.user.email
+                        : "",
 
-                type:
-                    query.insuranceDetails?.insuranceType ||
-                    "",
+                    type:
+                        query.insuranceDetails
+                            ?.insuranceType ||
+                        "",
 
-                amount:
-                    query.claimDetails?.claimAmount ?? 0,
+                    amount:
+                        query.claimDetails
+                            ?.claimAmount ?? 0,
 
-                status: query.status,
+                    status: query.status,
 
-                assignedTo: query.assignedAdmin
-                    ? query.assignedAdmin.name
-                    : null,
+                    assignedTo:
+                        query.assignedAdmin
+                            ? query.assignedAdmin.name
+                            : null,
 
-                priority: query.priority || null,
+                    priority:
+                        query.priority || null,
 
-                date: query.createdAt
-            })
-        );
+                    date: query.createdAt
+                })
+            );
 
 
         /*
         =====================================================
         STATUS OVERVIEW
-        =====================================================
-
-        These are the same dashboard concepts used by
-        the existing frontend.
-
-        Percentages are calculated from total queries.
         =====================================================
         */
 
@@ -279,7 +527,10 @@ const getDashboard = async (req, res) => {
             }
 
             return Number(
-                ((count / totalQueries) * 100).toFixed(1)
+                (
+                    (count / totalQueries) *
+                    100
+                ).toFixed(1)
             );
         };
 
@@ -289,25 +540,36 @@ const getDashboard = async (req, res) => {
                 label: "Pending Review",
                 count: pendingReview,
                 percentage:
-                    calculatePercentage(pendingReview)
+                    calculatePercentage(
+                        pendingReview
+                    )
             },
+
             {
                 label: "Under Review",
                 count: underReview,
                 percentage:
-                    calculatePercentage(underReview)
+                    calculatePercentage(
+                        underReview
+                    )
             },
+
             {
                 label: "Assigned",
                 count: assignedQueries,
                 percentage:
-                    calculatePercentage(assignedQueries)
+                    calculatePercentage(
+                        assignedQueries
+                    )
             },
+
             {
                 label: "Resolved",
                 count: resolvedClaims,
                 percentage:
-                    calculatePercentage(resolvedClaims)
+                    calculatePercentage(
+                        resolvedClaims
+                    )
             }
         ];
 
@@ -319,7 +581,8 @@ const getDashboard = async (req, res) => {
         */
 
         return res.status(200).json({
-            message: "Admin dashboard fetched successfully",
+            message:
+                "Admin dashboard fetched successfully",
 
             stats: {
                 totalQueries,
@@ -350,6 +613,7 @@ const getDashboard = async (req, res) => {
 
 module.exports = {
     getAdmins,
+    createSecondaryAdmin,
     promoteToSecondaryAdmin,
     removeSecondaryAdmin,
     getDashboard

@@ -1,4 +1,8 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
 import Home from "../pages/Home/Home";
 import Services from "../pages/Services/Services";
@@ -20,12 +24,12 @@ import MyQueries from "../pages/Queries/MyQueries";
 import QueryDetails from "../pages/MyQueries/QueryDetails";
 import MyDocuments from "../pages/MyDocuments/MyDocuments";
 import MyFeedbacks from "../pages/MyFeedbacks/MyFeedbacks";
-import EditFeedback from "../pages/Feedback/EditFeedback";
 
 import AdminDashboard from "../pages/Admin/AdminDashboard";
 import AdminQueries from "../pages/Admin/AdminQueries";
 import AdminQueryDetails from "../pages/Admin/AdminQueryDetails";
 import AdminManagement from "../pages/Admin/AdminManagement";
+import CreateSecondaryAdmin from "../pages/Admin/CreateSecondaryAdmin";
 import AdminUsers from "../pages/Admin/AdminUsers";
 import AdminDocuments from "../pages/Admin/AdminDocuments";
 import AdminFeedbacks from "../pages/Admin/AdminFeedbacks";
@@ -33,6 +37,7 @@ import AdminFeedbacks from "../pages/Admin/AdminFeedbacks";
 import ProtectedRoute from "./ProtectedRoute";
 import AdminRoute from "./AdminRoute";
 import MainAdminRoute from "./MainAdminRoute";
+
 
 function AppRoutes() {
   return (
@@ -133,47 +138,32 @@ function AppRoutes() {
           element={<MyFeedbacks />}
         />
 
-        <Route
-          path="/feedback/edit/:id"
-          element={<EditFeedback />}
-        />
       </Route>
-
 
 
       {/* ================= ADMIN ROUTES ================= */}
 
       <Route element={<AdminRoute />}>
 
-        {/* ADMIN DASHBOARD */}
-
         <Route
           path="/admin"
           element={<AdminDashboard />}
         />
-
-        {/* ALL QUERIES */}
 
         <Route
           path="/admin/queries"
           element={<AdminQueries />}
         />
 
-        {/* MY ASSIGNED QUERIES */}
-
         <Route
           path="/admin/my-assigned-queries"
           element={<AdminQueries />}
         />
 
-        {/* ADMIN QUERY DETAILS */}
-
         <Route
           path="/admin/queries/:id"
           element={<AdminQueryDetails />}
         />
-
-        {/* OTHER ADMIN PAGES */}
 
         <Route
           path="/admin/users"
@@ -202,6 +192,11 @@ function AppRoutes() {
           element={<AdminManagement />}
         />
 
+        <Route
+          path="/admin/create-secondary-admin"
+          element={<CreateSecondaryAdmin />}
+        />
+
       </Route>
 
 
@@ -209,11 +204,17 @@ function AppRoutes() {
 
       <Route
         path="*"
-        element={<Navigate to="/" replace />}
+        element={
+          <Navigate
+            to="/"
+            replace
+          />
+        }
       />
 
     </Routes>
   );
 }
+
 
 export default AppRoutes;

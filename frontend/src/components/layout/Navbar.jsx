@@ -49,6 +49,15 @@ const navLinks = [
   },
 ];
 
+const authPages = [
+  "/login",
+  "/signup",
+  "/verify-email",
+  "/forgot-password",
+  "/verify-reset-otp",
+  "/reset-password",
+];
+
 function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -64,6 +73,21 @@ function Navbar() {
   } = useAuth();
 
   const isActive = (path) => location.pathname === path;
+
+  /*
+   * ================= AUTHENTICATION PAGES =================
+   *
+   * Navbar should NOT appear on:
+   * Login
+   * Signup
+   * Verify Email
+   * Forgot Password
+   * Verify Reset OTP
+   * Reset Password
+   */
+  if (authPages.includes(location.pathname)) {
+    return null;
+  }
 
   const handleLogout = () => {
     logoutUser();
@@ -146,7 +170,10 @@ function Navbar() {
 
             {!user ? (
               <>
-                <Link to="/login" aria-label="Login to your account">
+                <Link
+                  to="/login"
+                  aria-label="Login to your account"
+                >
                   <motion.div
                     whileHover={{ y: -2 }}
                     whileTap={{ scale: 0.97 }}
@@ -157,7 +184,10 @@ function Navbar() {
                   </motion.div>
                 </Link>
 
-                <Link to="/signup" aria-label="Create a new account">
+                <Link
+                  to="/signup"
+                  aria-label="Create a new account"
+                >
                   <motion.div
                     whileHover={{ y: -2 }}
                     whileTap={{ scale: 0.97 }}
@@ -241,7 +271,6 @@ function Navbar() {
                           </div>
 
                           <div className="min-w-0">
-
                             <p className="truncate font-semibold text-slate-900">
                               {user?.name || "User"}
                             </p>
@@ -249,14 +278,16 @@ function Navbar() {
                             <p className="truncate text-sm text-slate-500">
                               {user?.email || ""}
                             </p>
-
                           </div>
+
                         </div>
                       </div>
 
                       {/* ================= DROPDOWN LINKS ================= */}
 
                       <div className="p-2">
+
+                        {/* ================= PROFILE ================= */}
 
                         <Link
                           to="/profile"
@@ -375,7 +406,6 @@ function Navbar() {
                       {/* ================= LOGOUT ================= */}
 
                       <div className="border-t border-slate-100 p-2">
-
                         <button
                           type="button"
                           onClick={handleLogout}
@@ -385,7 +415,6 @@ function Navbar() {
 
                           Logout
                         </button>
-
                       </div>
 
                     </motion.div>
@@ -545,7 +574,6 @@ function Navbar() {
                       </div>
 
                       <div className="min-w-0">
-
                         <p className="truncate font-semibold text-slate-900">
                           {user?.name || "User"}
                         </p>
@@ -553,7 +581,6 @@ function Navbar() {
                         <p className="truncate text-sm text-slate-500">
                           {user?.email || ""}
                         </p>
-
                       </div>
 
                     </div>
@@ -673,7 +700,6 @@ function Navbar() {
                       </button>
 
                     </div>
-
                   </div>
                 )}
 

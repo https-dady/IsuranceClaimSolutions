@@ -2,7 +2,7 @@ const express = require("express");
 
 const {
     getAdmins,
-    promoteToSecondaryAdmin,
+    createSecondaryAdmin,
     removeSecondaryAdmin,
     getDashboard
 } = require("../controllers/adminController");
@@ -48,13 +48,29 @@ router.get(
 );
 
 
-router.patch(
-    "/promote/:userId",
+/*
+=========================================================
+CREATE SECONDARY ADMIN
+=========================================================
+Main Admin only
+=========================================================
+*/
+
+router.post(
+    "/create-secondary-admin",
     protect,
     requireMainAdmin,
-    promoteToSecondaryAdmin
+    createSecondaryAdmin
 );
 
+
+/*
+=========================================================
+REMOVE SECONDARY ADMIN
+=========================================================
+Main Admin only
+=========================================================
+*/
 
 router.patch(
     "/remove/:userId",

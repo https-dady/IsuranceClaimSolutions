@@ -6,11 +6,15 @@ import {
   UserMinus,
   Users,
   ClipboardList,
-  X,
   Check,
   AlertTriangle,
   Clock,
 } from "lucide-react";
+
+import {
+  Link,
+  useNavigate,
+} from "react-router-dom";
 
 import AdminLayout from "../../components/layout/AdminLayout";
 
@@ -18,16 +22,16 @@ import { useAuth } from "../../context/AuthContext";
 
 import {
   getAdmins,
-  promoteToSecondaryAdmin,
   removeSecondaryAdmin,
 } from "../../api/adminApi";
 
-import { getUsers } from "../../api/userApi";
 import { getAdminQueries } from "../../api/queryApi";
+
 
 function getId(item) {
   return item?._id || item?.id || "";
 }
+
 
 function getInitials(name) {
   if (!name) {
@@ -37,25 +41,24 @@ function getInitials(name) {
   return name
     .split(" ")
     .filter(Boolean)
-    .map((word) => word.charAt(0))
+    .map((word) =>
+      word.charAt(0)
+    )
     .join("")
     .slice(0, 2)
     .toUpperCase();
 }
 
+
 function AdminManagement() {
+  const navigate = useNavigate();
+
   const { isMainAdmin } = useAuth();
 
   const [admins, setAdmins] = useState([]);
-  const [users, setUsers] = useState([]);
   const [queries, setQueries] = useState([]);
 
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const [isAddAdminOpen, setIsAddAdminOpen] =
-    useState(false);
-
-  const [selectedUser, setSelectedUser] =
+  const [searchTerm, setSearchTerm] =
     useState("");
 
   const [isLoading, setIsLoading] =
@@ -70,56 +73,58 @@ function AdminManagement() {
   const [successMessage, setSuccessMessage] =
     useState("");
 
-  /* =======================================================
-     FETCH ADMIN MANAGEMENT DATA
-  ======================================================= */
 
-  const fetchAdminManagementData = async () => {
-    try {
-      setIsLoading(true);
-      setErrorMessage("");
+  /*
+  =======================================================
+  FETCH ADMIN MANAGEMENT DATA
+  =======================================================
+  */
 
-      const [
-        adminsResponse,
-        usersResponse,
-        queriesResponse,
-      ] = await Promise.all([
-        getAdmins(),
-        getUsers(),
-        getAdminQueries(),
-      ]);
+  const fetchAdminManagementData =
+    async () => {
+      try {
+        setIsLoading(true);
+        setErrorMessage("");
 
-      setAdmins(
-        Array.isArray(adminsResponse?.admins)
-          ? adminsResponse.admins
-          : []
-      );
+        const [
+          adminsResponse,
+          queriesResponse,
+        ] = await Promise.all([
+          getAdmins(),
+          getAdminQueries(),
+        ]);
 
-      setUsers(
-        Array.isArray(usersResponse?.users)
-          ? usersResponse.users
-          : []
-      );
+        setAdmins(
+          Array.isArray(
+            adminsResponse?.admins
+          )
+            ? adminsResponse.admins
+            : []
+        );
 
-      setQueries(
-        Array.isArray(queriesResponse?.queries)
-          ? queriesResponse.queries
-          : []
-      );
-    } catch (error) {
-      console.error(
-        "Fetch admin management data error:",
-        error
-      );
+        setQueries(
+          Array.isArray(
+            queriesResponse?.queries
+          )
+            ? queriesResponse.queries
+            : []
+        );
 
-      setErrorMessage(
-        error.message ||
-          "Failed to load admin management data."
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      } catch (error) {
+        console.error(
+          "Fetch admin management data error:",
+          error
+        );
+
+        setErrorMessage(
+          error.message ||
+            "Failed to load admin management data."
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
 
   useEffect(() => {
     if (!isMainAdmin) {
@@ -130,42 +135,55 @@ function AdminManagement() {
     fetchAdminManagementData();
   }, [isMainAdmin]);
 
-  /* =======================================================
-     ASSIGNED QUERY COUNT
-  ======================================================= */
 
-  const assignedQueryCountByAdmin = useMemo(() => {
-    const counts = {};
+  /*
+  =======================================================
+  ASSIGNED QUERY COUNT
+  =======================================================
+  */
 
-    queries.forEach((query) => {
-      const adminId =
-        getId(query?.assignedAdmin);
+  const assignedQueryCountByAdmin =
+    useMemo(() => {
+      const counts = {};
 
-      if (!adminId) {
-        return;
-      }
+      queries.forEach((query) => {
+        const adminId =
+          getId(
+            query?.assignedAdmin
+          );
 
-      counts[adminId] =
-        (counts[adminId] || 0) + 1;
-    });
+        if (!adminId) {
+          return;
+        }
 
-    return counts;
-  }, [queries]);
+        counts[adminId] =
+          (counts[adminId] || 0) + 1;
+      });
 
-  /* =======================================================
-     SEARCH ADMINS
-  ======================================================= */
+      return counts;
+    }, [queries]);
+
+
+  /*
+  =======================================================
+  SEARCH ADMINS
+  =======================================================
+  */
 
   const filteredAdmins = useMemo(() => {
     const normalizedSearch =
-      searchTerm.trim().toLowerCase();
+      searchTerm
+        .trim()
+        .toLowerCase();
 
     return admins.filter((admin) => {
       const name =
-        admin?.name?.toLowerCase() || "";
+        admin?.name?.toLowerCase() ||
+        "";
 
       const email =
-        admin?.email?.toLowerCase() || "";
+        admin?.email?.toLowerCase() ||
+        "";
 
       return (
         !normalizedSearch ||
@@ -175,36 +193,19 @@ function AdminManagement() {
     });
   }, [admins, searchTerm]);
 
-  /* =======================================================
-     AVAILABLE NORMAL USERS
-  ======================================================= */
 
-  const availableUsers = useMemo(() => {
-    const adminIds = new Set(
-      admins.map((admin) =>
-        String(getId(admin))
-      )
+  /*
+  =======================================================
+  STATS
+  =======================================================
+  */
+
+  const secondaryAdmins =
+    admins.filter(
+      (admin) =>
+        admin?.role ===
+        "secondary_admin"
     );
-
-    return users.filter((user) => {
-      const userId = String(getId(user));
-
-      return (
-        user?.type === "user" &&
-        user?.role === "user" &&
-        !adminIds.has(userId)
-      );
-    });
-  }, [admins, users]);
-
-  /* =======================================================
-     STATS
-  ======================================================= */
-
-  const secondaryAdmins = admins.filter(
-    (admin) =>
-      admin?.role === "secondary_admin"
-  );
 
   const totalAssignedQueries =
     queries.filter(
@@ -212,99 +213,66 @@ function AdminManagement() {
         !!query?.assignedAdmin
     ).length;
 
-  /* =======================================================
-     PROMOTE USER
-  ======================================================= */
 
-  const handleMakeAdmin = async () => {
-    if (!selectedUser) {
-      return;
-    }
+  /*
+  =======================================================
+  REMOVE SECONDARY ADMIN
+  =======================================================
+  */
 
-    try {
-      setActionLoading(true);
-      setErrorMessage("");
-      setSuccessMessage("");
+  const handleRemoveAdmin =
+    async (adminId) => {
+      const confirmed =
+        window.confirm(
+          "Are you sure you want to remove this Secondary Admin?"
+        );
 
-      await promoteToSecondaryAdmin(
-        selectedUser
-      );
+      if (!confirmed) {
+        return;
+      }
 
-      setSelectedUser("");
-      setIsAddAdminOpen(false);
+      try {
+        setActionLoading(true);
+        setErrorMessage("");
+        setSuccessMessage("");
 
-      setSuccessMessage(
-        "User promoted to Secondary Admin successfully."
-      );
+        await removeSecondaryAdmin(
+          adminId
+        );
 
-      await fetchAdminManagementData();
-    } catch (error) {
-      console.error(
-        "Promote admin error:",
-        error
-      );
+        setSuccessMessage(
+          "Secondary Admin removed successfully."
+        );
 
-      setErrorMessage(
-        error.message ||
-          "Failed to promote user."
-      );
-    } finally {
-      setActionLoading(false);
-    }
-  };
+        await fetchAdminManagementData();
 
-  /* =======================================================
-     REMOVE SECONDARY ADMIN
-  ======================================================= */
+      } catch (error) {
+        console.error(
+          "Remove admin error:",
+          error
+        );
 
-  const handleRemoveAdmin = async (
-    adminId
-  ) => {
-    const confirmed = window.confirm(
-      "Are you sure you want to remove this Secondary Admin?"
-    );
+        setErrorMessage(
+          error.message ||
+            "Failed to remove Secondary Admin."
+        );
+      } finally {
+        setActionLoading(false);
+      }
+    };
 
-    if (!confirmed) {
-      return;
-    }
 
-    try {
-      setActionLoading(true);
-      setErrorMessage("");
-      setSuccessMessage("");
-
-      await removeSecondaryAdmin(
-        adminId
-      );
-
-      setSuccessMessage(
-        "Secondary Admin removed successfully."
-      );
-
-      await fetchAdminManagementData();
-    } catch (error) {
-      console.error(
-        "Remove admin error:",
-        error
-      );
-
-      setErrorMessage(
-        error.message ||
-          "Failed to remove Secondary Admin."
-      );
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  /* =======================================================
-     ACCESS CONTROL
-  ======================================================= */
+  /*
+  =======================================================
+  ACCESS CONTROL
+  =======================================================
+  */
 
   if (!isMainAdmin) {
     return (
       <AdminLayout>
         <div className="mx-auto flex min-h-[70vh] max-w-2xl flex-col items-center justify-center text-center">
+
           <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-amber-50 text-amber-600">
             <ShieldCheck className="h-10 w-10" />
           </div>
@@ -317,30 +285,43 @@ function AdminManagement() {
             Admin management is available only to
             the Main Admin.
           </p>
+
         </div>
       </AdminLayout>
     );
   }
 
-  /* =======================================================
-     LOADING
-  ======================================================= */
+
+  /*
+  =======================================================
+  LOADING
+  =======================================================
+  */
 
   if (isLoading) {
     return (
       <AdminLayout role="main_admin">
+
         <div className="mx-auto flex min-h-[70vh] max-w-7xl items-center justify-center">
+
           <div className="flex items-center gap-3 text-sm font-semibold text-slate-500">
+
             <Clock className="h-5 w-5 animate-spin" />
+
             Loading admin management...
+
           </div>
+
         </div>
+
       </AdminLayout>
     );
   }
 
+
   return (
     <AdminLayout role="main_admin">
+
       <div className="mx-auto max-w-7xl">
 
         {/* =================================================
@@ -350,13 +331,17 @@ function AdminManagement() {
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
 
           <div>
+
             <div className="flex items-center gap-3">
 
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 shadow-lg shadow-blue-500/20">
+
                 <ShieldCheck className="h-6 w-6 text-white" />
+
               </div>
 
               <div>
+
                 <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
                   Admin Management
                 </h1>
@@ -364,27 +349,33 @@ function AdminManagement() {
                 <p className="mt-1 text-sm text-slate-500">
                   Manage secondary admins and their access.
                 </p>
+
               </div>
 
             </div>
+
           </div>
+
 
           <button
             type="button"
-            onClick={() => {
-              setSuccessMessage("");
-              setErrorMessage("");
-              setSelectedUser("");
-              setIsAddAdminOpen(true);
-            }}
+            onClick={() =>
+              navigate(
+                "/admin/create-secondary-admin"
+              )
+            }
             disabled={actionLoading}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
+
             <UserPlus className="h-5 w-5" />
+
             Make Admin
+
           </button>
 
         </div>
+
 
         {/* =================================================
             MESSAGES
@@ -392,23 +383,29 @@ function AdminManagement() {
 
         {successMessage && (
           <div className="mt-6 flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+
             <Check className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
 
             <p className="text-sm font-medium text-emerald-700">
               {successMessage}
             </p>
+
           </div>
         )}
 
+
         {errorMessage && (
           <div className="mt-6 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4">
+
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-600" />
 
             <p className="text-sm font-medium text-red-700">
               {errorMessage}
             </p>
+
           </div>
         )}
+
 
         {/* =================================================
             STATS
@@ -416,14 +413,14 @@ function AdminManagement() {
 
         <div className="mt-8 grid gap-5 sm:grid-cols-3">
 
-          {/* Secondary Admins */}
-
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
             <div className="flex items-center justify-between">
 
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50">
+
                 <Users className="h-6 w-6 text-blue-600" />
+
               </div>
 
               <span className="text-sm font-medium text-slate-400">
@@ -442,14 +439,15 @@ function AdminManagement() {
 
           </div>
 
-          {/* Assigned Queries */}
 
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
             <div className="flex items-center justify-between">
 
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50">
+
                 <ClipboardList className="h-6 w-6 text-purple-600" />
+
               </div>
 
               <span className="text-sm font-medium text-slate-400">
@@ -468,33 +466,35 @@ function AdminManagement() {
 
           </div>
 
-          {/* Available Users */}
 
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
             <div className="flex items-center justify-between">
 
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100">
+
                 <UserPlus className="h-6 w-6 text-slate-600" />
+
               </div>
 
               <span className="text-sm font-medium text-slate-400">
-                Available
+                Action
               </span>
 
             </div>
 
             <p className="mt-5 text-3xl font-bold text-slate-900">
-              {availableUsers.length}
+              +
             </p>
 
             <p className="mt-1 text-sm font-medium text-slate-600">
-              Users Available for Promotion
+              Create New Secondary Admin
             </p>
 
           </div>
 
         </div>
+
 
         {/* =================================================
             ADMIN LIST
@@ -505,6 +505,7 @@ function AdminManagement() {
           <div className="flex flex-col gap-5 border-b border-slate-100 p-6 md:flex-row md:items-center md:justify-between">
 
             <div>
+
               <h2 className="text-lg font-bold text-slate-900">
                 Secondary Admins
               </h2>
@@ -512,9 +513,9 @@ function AdminManagement() {
               <p className="mt-1 text-sm text-slate-500">
                 Manage admin access and assigned workload.
               </p>
+
             </div>
 
-            {/* Search */}
 
             <div className="relative w-full md:w-72">
 
@@ -536,9 +537,6 @@ function AdminManagement() {
 
           </div>
 
-          {/* =================================================
-              TABLE
-          ================================================= */}
 
           <div className="overflow-x-auto">
 
@@ -568,102 +566,108 @@ function AdminManagement() {
 
               </thead>
 
+
               <tbody>
 
-                {filteredAdmins.map((admin) => {
-                  const adminId =
-                    getId(admin);
+                {filteredAdmins.map(
+                  (admin) => {
 
-                  const assignedQueries =
-                    assignedQueryCountByAdmin[
-                      adminId
-                    ] || 0;
+                    const adminId =
+                      getId(admin);
 
-                  return (
-                    <tr
-                      key={adminId}
-                      className="border-b border-slate-50 last:border-none hover:bg-slate-50/70"
-                    >
+                    const assignedQueries =
+                      assignedQueryCountByAdmin[
+                        adminId
+                      ] || 0;
 
-                      {/* Admin */}
+                    return (
+                      <tr
+                        key={adminId}
+                        className="border-b border-slate-50 last:border-none hover:bg-slate-50/70"
+                      >
 
-                      <td className="px-6 py-5">
+                        <td className="px-6 py-5">
 
-                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3">
 
-                          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-600">
-                            {getInitials(
-                              admin?.name
-                            )}
+                            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-blue-100 font-bold text-blue-600">
+
+                              {getInitials(
+                                admin?.name
+                              )}
+
+                            </div>
+
+                            <div>
+
+                              <p className="text-sm font-bold text-slate-800">
+                                {admin?.name ||
+                                  "Unnamed Admin"}
+                              </p>
+
+                              <p className="mt-1 text-xs text-slate-400">
+                                {admin?.email ||
+                                  "N/A"}
+                              </p>
+
+                            </div>
+
                           </div>
 
-                          <div>
+                        </td>
 
-                            <p className="text-sm font-bold text-slate-800">
-                              {admin?.name ||
-                                "Unnamed Admin"}
-                            </p>
 
-                            <p className="mt-1 text-xs text-slate-400">
-                              {admin?.email ||
-                                "N/A"}
-                            </p>
+                        <td className="px-6 py-5">
 
-                          </div>
-
-                        </div>
-
-                      </td>
-
-                      {/* Role */}
-
-                      <td className="px-6 py-5">
-
-                        <span className="inline-flex rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-600">
-                          Secondary Admin
-                        </span>
-
-                      </td>
-
-                      {/* Assigned Queries */}
-
-                      <td className="px-6 py-5">
-
-                        <div className="flex items-center gap-2">
-
-                          <ClipboardList className="h-4 w-4 text-slate-400" />
-
-                          <span className="text-sm font-semibold text-slate-700">
-                            {assignedQueries}
+                          <span className="inline-flex rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-600">
+                            Secondary Admin
                           </span>
 
-                        </div>
+                        </td>
 
-                      </td>
 
-                      {/* Action */}
+                        <td className="px-6 py-5">
 
-                      <td className="px-6 py-5 text-right">
+                          <div className="flex items-center gap-2">
 
-                        <button
-                          type="button"
-                          disabled={actionLoading}
-                          onClick={() =>
-                            handleRemoveAdmin(
-                              adminId
-                            )
-                          }
-                          className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <UserMinus className="h-4 w-4" />
-                          Remove
-                        </button>
+                            <ClipboardList className="h-4 w-4 text-slate-400" />
 
-                      </td>
+                            <span className="text-sm font-semibold text-slate-700">
+                              {assignedQueries}
+                            </span>
 
-                    </tr>
-                  );
-                })}
+                          </div>
+
+                        </td>
+
+
+                        <td className="px-6 py-5 text-right">
+
+                          <button
+                            type="button"
+                            disabled={
+                              actionLoading
+                            }
+                            onClick={() =>
+                              handleRemoveAdmin(
+                                adminId
+                              )
+                            }
+                            className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+
+                            <UserMinus className="h-4 w-4" />
+
+                            Remove
+
+                          </button>
+
+                        </td>
+
+                      </tr>
+                    );
+                  }
+                )}
 
               </tbody>
 
@@ -671,10 +675,8 @@ function AdminManagement() {
 
           </div>
 
-          {/* Empty State */}
 
           {filteredAdmins.length === 0 && (
-
             <div className="py-16 text-center">
 
               <Users className="mx-auto h-10 w-10 text-slate-300" />
@@ -688,141 +690,15 @@ function AdminManagement() {
               </p>
 
             </div>
-
           )}
 
         </div>
 
       </div>
 
-      {/* ===================================================
-          MAKE ADMIN MODAL
-      =================================================== */}
-
-      {isAddAdminOpen && (
-
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm">
-
-          <div className="w-full max-w-md rounded-2xl bg-white shadow-2xl">
-
-            {/* Modal Header */}
-
-            <div className="flex items-center justify-between border-b border-slate-100 p-6">
-
-              <div>
-
-                <h2 className="text-xl font-bold text-slate-900">
-                  Make Secondary Admin
-                </h2>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Select a registered user to grant admin access.
-                </p>
-
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsAddAdminOpen(false);
-                  setSelectedUser("");
-                }}
-                disabled={actionLoading}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
-              >
-                <X className="h-5 w-5" />
-              </button>
-
-            </div>
-
-            {/* Modal Body */}
-
-            <div className="p-6">
-
-              <label className="mb-2 block text-sm font-semibold text-slate-700">
-                Select User
-              </label>
-
-              <select
-                value={selectedUser}
-                onChange={(event) =>
-                  setSelectedUser(
-                    event.target.value
-                  )
-                }
-                disabled={actionLoading}
-                className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:border-blue-400 disabled:cursor-not-allowed disabled:bg-slate-50"
-              >
-
-                <option value="">
-                  Select a registered user
-                </option>
-
-                {availableUsers.map(
-                  (user) => (
-                    <option
-                      key={getId(user)}
-                      value={getId(user)}
-                    >
-                      {user.name} —{" "}
-                      {user.email}
-                    </option>
-                  )
-                )}
-
-              </select>
-
-              {availableUsers.length === 0 && (
-
-                <p className="mt-3 text-sm text-slate-500">
-                  No normal users are currently
-                  available to make Secondary Admin.
-                </p>
-
-              )}
-
-            </div>
-
-            {/* Modal Footer */}
-
-            <div className="flex gap-3 border-t border-slate-100 p-6">
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsAddAdminOpen(false);
-                  setSelectedUser("");
-                }}
-                disabled={actionLoading}
-                className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={handleMakeAdmin}
-                disabled={
-                  !selectedUser ||
-                  actionLoading
-                }
-                className="flex-1 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {actionLoading
-                  ? "Processing..."
-                  : "Make Admin"}
-              </button>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      )}
-
     </AdminLayout>
   );
 }
+
 
 export default AdminManagement;
