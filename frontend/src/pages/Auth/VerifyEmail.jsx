@@ -10,6 +10,10 @@ import {
 } from "lucide-react";
 
 import OtpInput from "../../components/auth/OtpInput";
+import {
+  verifyEmail,
+  resendVerificationOTP,
+} from "../../api/authApi";
 
 function VerifyEmail() {
   const location = useLocation();
@@ -17,11 +21,13 @@ function VerifyEmail() {
 
   const email = location.state?.email;
 
-  const [otp, setOtp] = useState(
-    Array(6).fill("")
-  );
-
+  const [otp, setOtp] = useState(Array(6).fill(""));
   const [seconds, setSeconds] = useState(60);
+
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   const otpValue = otp.join("");
 
@@ -43,29 +49,62 @@ function VerifyEmail() {
     return () => clearInterval(timer);
   }, [seconds]);
 
-  const handleVerify = (event) => {
+  const handleVerify = async (event) => {
     event.preventDefault();
 
+    setError("");
+    setSuccess("");
+
     if (otpValue.length !== 6) {
-      alert("Please enter the complete 6-digit OTP.");
+      setError("Please enter the complete 6-digit OTP.");
       return;
     }
 
-    // Backend integration later
-    console.log("OTP:", otpValue);
+    try {
+      setIsVerifying(true);
 
-    // Temporary navigation
-    navigate("/login");
+      await verifyEmail({
+        email,
+        otp: otpValue,
+      });
+
+      setSuccess("Email verified successfully!");
+
+      setTimeout(() => {
+        navigate("/login");
+      }, 1000);
+    } catch (err) {
+      setError(
+        err?.message ||
+          "Invalid or expired OTP. Please try again."
+      );
+    } finally {
+      setIsVerifying(false);
+    }
   };
 
-  const handleResendOtp = () => {
-    if (seconds > 0) return;
+  const handleResendOtp = async () => {
+    if (seconds > 0 || isResending) return;
 
-    // Backend integration later
-    console.log("Resending OTP to:", email);
+    setError("");
+    setSuccess("");
 
-    setOtp(Array(6).fill(""));
-    setSeconds(60);
+    try {
+      setIsResending(true);
+
+      await resendVerificationOTP(email);
+
+      setOtp(Array(6).fill(""));
+      setSeconds(60);
+      setSuccess("A new verification code has been sent to your email.");
+    } catch (err) {
+      setError(
+        err?.message ||
+          "Unable to resend verification code. Please try again."
+      );
+    } finally {
+      setIsResending(false);
+    }
   };
 
   return (
@@ -173,16 +212,32 @@ function VerifyEmail() {
             Enter the verification code sent to your email.
           </p>
 
+          {/* Error */}
+          {error && (
+            <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-medium text-red-600">
+              {error}
+            </div>
+          )}
+
+          {/* Success */}
+          {success && (
+            <div className="mt-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-center text-sm font-medium text-green-600">
+              {success}
+            </div>
+          )}
+
           {/* Verify Button */}
           <button
             type="submit"
-            disabled={otpValue.length !== 6}
+            disabled={otpValue.length !== 6 || isVerifying}
             className="group mt-8 flex h-14 w-full items-center justify-center rounded-xl bg-gradient-to-r from-slate-900 to-blue-700 text-base font-semibold text-white shadow-lg shadow-blue-900/15 transition-all duration-300 hover:-translate-y-0.5 hover:from-slate-800 hover:to-blue-600 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
           >
 
-            Verify Email
+            {isVerifying ? "Verifying..." : "Verify Email"}
 
-            <ArrowRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+            {!isVerifying && (
+              <ArrowRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+            )}
 
           </button>
 
@@ -206,12 +261,19 @@ function VerifyEmail() {
             <button
               type="button"
               onClick={handleResendOtp}
-              className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 transition-colors hover:text-slate-900"
+              disabled={isResending}
+              className="inline-flex items-center gap-2 text-sm font-semibold text-blue-700 transition-colors hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
             >
 
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw
+                className={`h-4 w-4 ${
+                  isResending ? "animate-spin" : ""
+                }`}
+              />
 
-              Resend Verification Code
+              {isResending
+                ? "Sending..."
+                : "Resend Verification Code"}
 
             </button>
           )}

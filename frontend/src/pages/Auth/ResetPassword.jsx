@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import {
   LockKeyhole,
@@ -8,44 +8,70 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
+import { resetPassword } from "../../api/authApi";
+
 function ResetPassword() {
-  const [password, setPassword] = useState("");
-
-  const [confirmPassword, setConfirmPassword] =
-    useState("");
-
-  const [showPassword, setShowPassword] =
-    useState(false);
-
-  const [showConfirmPassword, setShowConfirmPassword] =
-    useState(false);
-
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleSubmit = (e) => {
+  const email = location.state?.email;
+  const otp = location.state?.otp;
+
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    setError("");
+
+    if (!email || !otp) {
+      setError(
+        "Password reset session is missing. Please restart the password reset process."
+      );
+      return;
+    }
+
     if (!password || !confirmPassword) {
-      alert("Please fill all fields");
+      setError("Please fill all fields.");
       return;
     }
 
     if (password.length < 6) {
-      alert("Password must be at least 6 characters");
+      setError("Password must be at least 6 characters.");
       return;
     }
 
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
+      setError("Passwords do not match.");
       return;
     }
 
-    // Temporary frontend success
-    // Later backend password update karega
+    try {
+      setIsLoading(true);
 
-    alert("Password reset successfully!");
+      await resetPassword({
+        email,
+        otp,
+        newPassword: password,
+        confirmPassword,
+      });
 
-    navigate("/login");
+      navigate("/login");
+    } catch (err) {
+      setError(
+        err?.message ||
+          "Unable to reset password. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -101,9 +127,10 @@ function ResetPassword() {
                       : "password"
                   }
                   value={password}
-                  onChange={(e) =>
-                    setPassword(e.target.value)
-                  }
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError("");
+                  }}
                   placeholder="Enter new password"
                   className="w-full rounded-xl border border-slate-200 py-3.5 pl-12 pr-12 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
                 />
@@ -147,9 +174,10 @@ function ResetPassword() {
                       : "password"
                   }
                   value={confirmPassword}
-                  onChange={(e) =>
-                    setConfirmPassword(e.target.value)
-                  }
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    setError("");
+                  }}
                   placeholder="Confirm new password"
                   className="w-full rounded-xl border border-slate-200 py-3.5 pl-12 pr-12 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
                 />
@@ -176,13 +204,24 @@ function ResetPassword() {
 
             </div>
 
+            {/* Error */}
+
+            {error && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
+                {error}
+              </div>
+            )}
+
             {/* Submit */}
 
             <button
               type="submit"
-              className="flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700"
+              disabled={isLoading}
+              className="flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Reset Password
+              {isLoading
+                ? "Resetting Password..."
+                : "Reset Password"}
             </button>
 
           </form>

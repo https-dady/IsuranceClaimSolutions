@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Mail,
@@ -10,8 +10,64 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { login } from "../../api/authApi";
+import { useAuth } from "../../context/AuthContext";
+
 function Login() {
+  const navigate = useNavigate();
+
+  const { loginUser } = useAuth();
+
   const [showPassword, setShowPassword] = useState(false);
+
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    setError("");
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    setError("");
+
+    if (!formData.email || !formData.password) {
+      setError("Please enter your email and password.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const response = await login(formData);
+
+      // Store authentication state centrally
+      loginUser(response);
+
+      // Redirect after successful login
+      navigate("/");
+    } catch (err) {
+      setError(
+        err?.message ||
+          "Login failed. Please check your credentials and try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-[#f7fbff] px-4 py-16 sm:px-6 lg:px-8">
@@ -32,6 +88,7 @@ function Login() {
             backgroundSize: "24px 24px",
           }}
         />
+
       </div>
 
       <div className="relative z-10 mx-auto flex min-h-[calc(100vh-8rem)] max-w-6xl items-center justify-center">
@@ -71,6 +128,7 @@ function Login() {
                     The Legal Consultant
                   </p>
                 </div>
+
               </div>
 
               <h1 className="max-w-md text-4xl font-bold leading-tight">
@@ -93,6 +151,7 @@ function Login() {
                 disputed insurance claims with professional guidance."
               </p>
             </div>
+
           </div>
 
           {/* Right Side - Form */}
@@ -116,6 +175,7 @@ function Login() {
                     The Legal Consultant
                   </p>
                 </div>
+
               </div>
 
               {/* Heading */}
@@ -134,10 +194,14 @@ function Login() {
                   Login to manage your insurance claim queries and stay
                   updated on their progress.
                 </p>
+
               </div>
 
               {/* Form */}
-              <form className="space-y-5">
+              <form
+                onSubmit={handleSubmit}
+                className="space-y-5"
+              >
 
                 {/* Email */}
                 <div>
@@ -154,10 +218,14 @@ function Login() {
 
                     <input
                       id="email"
+                      name="email"
                       type="email"
+                      value={formData.email}
+                      onChange={handleChange}
                       placeholder="Enter your email address"
                       className="h-14 w-full rounded-xl border border-slate-200 bg-white/70 pl-12 pr-4 text-slate-900 outline-none transition-all duration-300 placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                     />
+
                   </div>
                 </div>
 
@@ -175,10 +243,10 @@ function Login() {
                     <Link
                       to="/forgot-password"
                       className="text-sm font-medium text-blue-700 transition-colors hover:text-slate-900"
-                      
                     >
                       Forgot Password?
                     </Link>
+
                   </div>
 
                   <div className="relative">
@@ -187,7 +255,10 @@ function Login() {
 
                     <input
                       id="password"
+                      name="password"
                       type={showPassword ? "text" : "password"}
+                      value={formData.password}
+                      onChange={handleChange}
                       placeholder="Enter your password"
                       className="h-14 w-full rounded-xl border border-slate-200 bg-white/70 pl-12 pr-12 text-slate-900 outline-none transition-all duration-300 placeholder:text-slate-400 focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
                     />
@@ -208,6 +279,7 @@ function Login() {
                         <Eye className="h-5 w-5" />
                       )}
                     </button>
+
                   </div>
                 </div>
 
@@ -220,16 +292,27 @@ function Login() {
                   />
 
                   Remember me
+
                 </label>
+
+                {/* Error */}
+                {error && (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
+                    {error}
+                  </div>
+                )}
 
                 {/* Login Button */}
                 <button
                   type="submit"
-                  className="group flex h-14 w-full items-center justify-center rounded-xl bg-gradient-to-r from-slate-900 to-blue-700 text-base font-semibold text-white shadow-lg shadow-blue-900/15 transition-all duration-300 hover:-translate-y-0.5 hover:from-slate-800 hover:to-blue-600 hover:shadow-xl"
+                  disabled={isLoading}
+                  className="group flex h-14 w-full items-center justify-center rounded-xl bg-gradient-to-r from-slate-900 to-blue-700 text-base font-semibold text-white shadow-lg shadow-blue-900/15 transition-all duration-300 hover:-translate-y-0.5 hover:from-slate-800 hover:to-blue-600 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
                 >
-                  Login
+                  {isLoading ? "Logging in..." : "Login"}
 
-                  <ArrowRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+                  {!isLoading && (
+                    <ArrowRight className="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+                  )}
                 </button>
 
               </form>
@@ -244,6 +327,7 @@ function Login() {
                 </span>
 
                 <div className="h-px flex-1 bg-slate-200" />
+
               </div>
 
               {/* Signup */}
@@ -256,13 +340,17 @@ function Login() {
                 >
                   Create an account
                 </Link>
+
               </p>
 
             </div>
+
           </div>
 
         </motion.div>
+
       </div>
+
     </section>
   );
 }

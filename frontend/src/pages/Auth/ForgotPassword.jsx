@@ -2,27 +2,44 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, ArrowLeft, ShieldCheck } from "lucide-react";
 
+import { forgotPassword } from "../../api/authApi";
+
 function ForgotPassword() {
   const [email, setEmail] = useState("");
 
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
+    setError("");
+
     if (!email) {
-      alert("Please enter your email address");
+      setError("Please enter your email address.");
       return;
     }
 
-    // Temporary frontend flow
-    // Later backend se OTP send hoga
+    try {
+      setIsLoading(true);
 
-    navigate("/verify-reset-otp", {
-      state: {
-        email,
-      },
-    });
+      await forgotPassword(email);
+
+      navigate("/verify-reset-otp", {
+        state: {
+          email,
+        },
+      });
+    } catch (err) {
+      setError(
+        err?.message ||
+          "Unable to send verification code. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -81,7 +98,10 @@ function ForgotPassword() {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setError("");
+                  }}
                   placeholder="Enter your registered email"
                   className="w-full rounded-xl border border-slate-200 py-3.5 pl-12 pr-4 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10"
                 />
@@ -89,13 +109,24 @@ function ForgotPassword() {
               </div>
             </div>
 
+            {/* Error */}
+
+            {error && (
+              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600">
+                {error}
+              </div>
+            )}
+
             {/* Submit */}
 
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700"
+              disabled={isLoading}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-3.5 text-sm font-semibold text-white shadow-lg shadow-blue-600/20 transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Send Verification Code
+              {isLoading
+                ? "Sending Verification Code..."
+                : "Send Verification Code"}
             </button>
 
           </form>

@@ -29,20 +29,11 @@ import AdminUsers from "../pages/Admin/AdminUsers";
 import AdminDocuments from "../pages/Admin/AdminDocuments";
 import AdminFeedbacks from "../pages/Admin/AdminFeedbacks";
 
-import { currentUser } from "../utils/currentUser";
-
+import ProtectedRoute from "./ProtectedRoute";
+import AdminRoute from "./AdminRoute";
+import MainAdminRoute from "./MainAdminRoute";
 
 function AppRoutes() {
-
-  // ================= USER ROLE CHECKS =================
-
-  const isAdmin = currentUser?.type === "admin";
-
-  const isMainAdmin =
-    currentUser?.type === "admin" &&
-    currentUser?.role === "main_admin";
-
-
   return (
     <Routes>
 
@@ -96,7 +87,6 @@ function AppRoutes() {
         element={<VerifyEmail />}
       />
 
-
       <Route
         path="/forgot-password"
         element={<ForgotPassword />}
@@ -113,126 +103,100 @@ function AppRoutes() {
       />
 
 
-
       {/* ================= NORMAL USER ROUTES ================= */}
 
-      <Route
-        path="/profile"
-        element={<MyProfile />}
-      />
+      <Route element={<ProtectedRoute />}>
 
-      <Route
-        path="/my-queries"
-        element={<MyQueries />}
-      />
+        <Route
+          path="/profile"
+          element={<MyProfile />}
+        />
 
-      <Route
-        path="/my-queries/:id"
-        element={<QueryDetails />}
-      />
+        <Route
+          path="/my-queries"
+          element={<MyQueries />}
+        />
 
-      <Route
-        path="/my-documents"
-        element={<MyDocuments />}
-      />
+        <Route
+          path="/my-queries/:id"
+          element={<QueryDetails />}
+        />
 
-      <Route
-        path="/my-feedbacks"
-        element={<MyFeedbacks />}
-      />
+        <Route
+          path="/my-documents"
+          element={<MyDocuments />}
+        />
+
+        <Route
+          path="/my-feedbacks"
+          element={<MyFeedbacks />}
+        />
+
+      </Route>
 
 
       {/* ================= ADMIN ROUTES ================= */}
 
+      <Route element={<AdminRoute />}>
 
-      {/* ADMIN DASHBOARD */}
+        {/* ADMIN DASHBOARD */}
 
-      <Route
-        path="/admin"
-        element={
-          isAdmin
-            ? <AdminDashboard />
-            : <Navigate to="/" replace />
-        }
-      />
+        <Route
+          path="/admin"
+          element={<AdminDashboard />}
+        />
 
+        {/* ALL QUERIES */}
 
-      {/* ALL QUERIES */}
+        <Route
+          path="/admin/queries"
+          element={<AdminQueries />}
+        />
 
-      <Route
-        path="/admin/queries"
-        element={
-          isAdmin
-            ? <AdminQueries />
-            : <Navigate to="/" replace />
-        }
-      />
+        {/* MY ASSIGNED QUERIES */}
 
+        <Route
+          path="/admin/my-assigned-queries"
+          element={<AdminQueries />}
+        />
 
-      {/* MY ASSIGNED QUERIES */}
+        {/* ADMIN QUERY DETAILS */}
 
-      <Route
-        path="/admin/my-assigned-queries"
-        element={
-          isAdmin
-            ? <AdminQueries />
-            : <Navigate to="/" replace />
-        }
-      />
+        <Route
+          path="/admin/queries/:id"
+          element={<AdminQueryDetails />}
+        />
 
+        {/* OTHER ADMIN PAGES */}
 
-      {/* ADMIN QUERY DETAILS */}
+        <Route
+          path="/admin/users"
+          element={<AdminUsers />}
+        />
 
-      <Route
-        path="/admin/queries/:id"
-        element={
-          isAdmin
-            ? <AdminQueryDetails />
-            : <Navigate to="/" replace />
-        }
-      />
+        <Route
+          path="/admin/documents"
+          element={<AdminDocuments />}
+        />
+
+        <Route
+          path="/admin/feedbacks"
+          element={<AdminFeedbacks />}
+        />
+
+      </Route>
 
 
       {/* ================= MAIN ADMIN ONLY ================= */}
 
-      <Route
-        path="/admin/admin-management"
-        element={
-          isMainAdmin
-            ? <AdminManagement />
-            : <Navigate to="/admin" replace />
-        }
-      />
+      <Route element={<MainAdminRoute />}>
 
+        <Route
+          path="/admin/admin-management"
+          element={<AdminManagement />}
+        />
 
-      {/* ================= OTHER ADMIN PAGES ================= */}
-
-      <Route
-        path="/admin/users"
-        element={
-          isAdmin
-            ? <AdminUsers />
-            : <Navigate to="/" replace />
-        }
-      />
-
-      <Route
-        path="/admin/documents"
-        element={
-          isAdmin
-            ? <AdminDocuments />
-            : <Navigate to="/" replace />
-        }
-      />
-
-      <Route
-        path="/admin/feedbacks"
-        element={
-          isAdmin
-            ? <AdminFeedbacks />
-            : <Navigate to="/" replace />
-        }
-      />
+      </Route>
 
 
       {/* ================= FALLBACK ================= */}
