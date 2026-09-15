@@ -1,4 +1,6 @@
 const Document = require("../models/Document");
+const Query = require("../models/Query");
+const mongoose = require("mongoose");
 const uploadToCloudinary = require("../utils/cloudinaryUpload");
 const cloudinary = require("../config/cloudinary");
 
@@ -188,13 +190,44 @@ const uploadDocuments = async (req, res) => {
             }
         }
 
+        const queryId =
+            req.body.queryId || null;
+
+        if (queryId) {
+            const queryConditions = [
+                { queryId: queryId },
+            ];
+
+            if (
+                mongoose.Types.ObjectId.isValid(
+                    queryId
+                )
+            ) {
+                queryConditions.push({
+                    _id: queryId
+                });
+            }
+
+            const query =
+                await Query.findOne({
+                    user: req.user.userId,
+                    $or: queryConditions
+                });
+
+            if (!query) {
+                return res.status(404).json({
+                    message:
+                        "Query not found or you do not have access to it"
+                });
+            }
+        }
+
         const documents =
             await createDocumentRecords({
                 files: req.files,
                 documentTypes,
                 userId: req.user.userId,
-                queryId:
-                    req.body.queryId || null
+                queryId
             });
 
         return res.status(201).json({
@@ -251,6 +284,77 @@ const getMyDocuments = async (req, res) => {
         return res.status(500).json({
             message:
                 "Failed to fetch documents"
+        });
+    }
+};
+
+
+/*
+=========================================================
+GET USER DOCUMENTS FOR A QUERY
+=========================================================
+*/
+
+const getMyQueryDocuments = async (req, res) => {
+    try {
+        const queryIdentifier =
+            req.params.queryId;
+
+        const queryConditions = [
+            {
+                queryId:
+                    queryIdentifier
+            },
+        ];
+
+        if (
+            mongoose.Types.ObjectId.isValid(
+                queryIdentifier
+            )
+        ) {
+            queryConditions.push({
+                _id:
+                    queryIdentifier
+            });
+        }
+
+        const query =
+            await Query.findOne({
+                user: req.user.userId,
+                $or: queryConditions
+            }).select(
+                "_id queryId"
+            );
+
+        if (!query) {
+            return res.status(404).json({
+                message:
+                    "Query not found or you do not have access to it"
+            });
+        }
+
+        const documents =
+            await Document.find({
+                user: req.user.userId,
+                query: query._id
+            })
+                .sort({
+                    createdAt: -1
+                });
+
+        return res.status(200).json({
+            documents
+        });
+
+    } catch (error) {
+        console.error(
+            "Get query documents error:",
+            error
+        );
+
+        return res.status(500).json({
+            message:
+                "Failed to fetch query documents"
         });
     }
 };
@@ -555,6 +659,7 @@ module.exports = {
     uploadDocuments,
     createDocumentRecords,
     getMyDocuments,
+    getMyQueryDocuments,
     getDocumentById,
     deleteDocument,
     getAdminDocuments,

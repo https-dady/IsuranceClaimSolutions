@@ -3,6 +3,7 @@ const express = require("express");
 const {
     uploadDocuments,
     getMyDocuments,
+    getMyQueryDocuments,
     getDocumentById,
     deleteDocument,
     getAdminDocuments,
@@ -18,12 +19,6 @@ const handleDocumentUpload = require("../middleware/documentUploadMiddleware");
 
 const router = express.Router();
 
-
-// =========================================================
-// USER DOCUMENT ROUTES
-// =========================================================
-
-// Upload documents
 router.post(
     "/upload",
     protect,
@@ -31,39 +26,30 @@ router.post(
     uploadDocuments
 );
 
-// Get logged-in user's documents
 router.get(
     "/my",
     protect,
     getMyDocuments
 );
 
-// Get single logged-in user's document
+router.get(
+    "/my/query/:queryId",
+    protect,
+    getMyQueryDocuments
+);
+
 router.get(
     "/my/:documentId",
     protect,
     getDocumentById
 );
 
-// Delete logged-in user's document
 router.delete(
     "/my/:documentId",
     protect,
     deleteDocument
 );
 
-
-// =========================================================
-// ADMIN DOCUMENT ROUTES
-// =========================================================
-
-// Get all documents
-// Supports:
-// ?search=
-// ?status=pending
-// ?status=approved
-// ?status=rejected
-// ?status=All
 router.get(
     "/admin",
     protect,
@@ -71,13 +57,11 @@ router.get(
     getAdminDocuments
 );
 
-// Get single document for admin
 router.get(
     "/admin/:documentId",
     protect,
     requireAdmin,
     getAdminDocumentById
 );
-
 
 module.exports = router;
