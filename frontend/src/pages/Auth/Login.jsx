@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Mail,
@@ -14,6 +14,7 @@ import { login } from "../../api/authApi";
 import { useAuth } from "../../context/AuthContext";
 
 function Login() {
+  const location = useLocation();
   const navigate = useNavigate();
 
   const { loginUser } = useAuth();
@@ -27,6 +28,7 @@ function Login() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const successMessage = location.state?.successMessage || "";
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -196,6 +198,12 @@ function Login() {
                 </p>
 
               </div>
+
+              {successMessage && (
+                <div className="mb-5 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
+                  {successMessage}
+                </div>
+              )}
 
               {/* Form */}
               <form

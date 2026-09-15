@@ -152,7 +152,7 @@ function Footer() {
                 </div>
 
                 <span className="pt-2 text-slate-400">
-                  Contact details coming soon
+                  +91 6265244028, +91 8085243424
                 </span>
               </li>
 
@@ -162,7 +162,7 @@ function Footer() {
                 </div>
 
                 <span className="pt-2 text-slate-400">
-                  Email details coming soon
+                  C-60, Sage green City Suhagpur Kolar Road madhya pradesh Bhopal 462042
                 </span>
               </li>
 
@@ -220,7 +220,7 @@ function Footer() {
             </a>
 
             <a
-              href="#"
+              href="https://www.instagram.com/insuranceclaimsolution?igsh=eXRudGx3dnVjNjVj"
               aria-label="Instagram"
               className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-white/5 text-slate-400 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-blue-400"
             >

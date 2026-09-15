@@ -29,7 +29,6 @@ import AdminDashboard from "../pages/Admin/AdminDashboard";
 import AdminQueries from "../pages/Admin/AdminQueries";
 import AdminQueryDetails from "../pages/Admin/AdminQueryDetails";
 import AdminManagement from "../pages/Admin/AdminManagement";
-import CreateSecondaryAdmin from "../pages/Admin/CreateSecondaryAdmin";
 import AdminUsers from "../pages/Admin/AdminUsers";
 import AdminDocuments from "../pages/Admin/AdminDocuments";
 import AdminFeedbacks from "../pages/Admin/AdminFeedbacks";
@@ -38,6 +37,10 @@ import ProtectedRoute from "./ProtectedRoute";
 import AdminRoute from "./AdminRoute";
 import MainAdminRoute from "./MainAdminRoute";
 
+
+import CreateSecondaryAdmin from "../pages/Admin/CreateSecondaryAdmin";
+import SecondaryAdminVerification from "../pages/Admin/SecondaryAdminVerification";
+import SecondaryAdminSuccess from "../pages/Admin/SecondaryAdminSuccess";
 
 function AppRoutes() {
   return (
@@ -185,8 +188,8 @@ function AppRoutes() {
 
       {/* ================= MAIN ADMIN ONLY ================= */}
 
-      <Route element={<MainAdminRoute />}>
 
+      <Route element={<MainAdminRoute />}>
         <Route
           path="/admin/admin-management"
           element={<AdminManagement />}
@@ -197,20 +200,16 @@ function AppRoutes() {
           element={<CreateSecondaryAdmin />}
         />
 
+        <Route
+          path="/admin/create-secondary-admin/verify"
+          element={<SecondaryAdminVerification />}
+        />
+
+        <Route
+          path="/admin/create-secondary-admin/success"
+          element={<SecondaryAdminSuccess />}
+        />
       </Route>
-
-
-      {/* ================= FALLBACK ================= */}
-
-      <Route
-        path="*"
-        element={
-          <Navigate
-            to="/"
-            replace
-          />
-        }
-      />
 
     </Routes>
   );

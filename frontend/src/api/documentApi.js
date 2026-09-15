@@ -32,6 +32,15 @@ export const getMyDocuments = () => {
   });
 };
 
+export const getMyQueryDocuments = (queryId) => {
+  return apiClient(
+    `/api/documents/my/query/${encodeURIComponent(queryId)}`,
+    {
+      method: "GET",
+    }
+  );
+};
+
 export const getMyDocumentById = (documentId) => {
   return apiClient(
     `/api/documents/my/${encodeURIComponent(documentId)}`,

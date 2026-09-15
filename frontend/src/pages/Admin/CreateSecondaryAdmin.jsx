@@ -18,7 +18,6 @@ import {
   createSecondaryAdmin,
 } from "../../api/adminApi";
 
-
 function CreateSecondaryAdmin() {
   const navigate = useNavigate();
 
@@ -44,7 +43,6 @@ function CreateSecondaryAdmin() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -56,7 +54,6 @@ function CreateSecondaryAdmin() {
     setError("");
     setSuccess("");
   };
-
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -71,9 +68,7 @@ function CreateSecondaryAdmin() {
       !formData.password ||
       !formData.confirmPassword
     ) {
-      setError(
-        "All fields are required."
-      );
+      setError("All fields are required.");
       return;
     }
 
@@ -81,9 +76,7 @@ function CreateSecondaryAdmin() {
       formData.password !==
       formData.confirmPassword
     ) {
-      setError(
-        "Passwords do not match."
-      );
+      setError("Passwords do not match.");
       return;
     }
 
@@ -98,26 +91,25 @@ function CreateSecondaryAdmin() {
       setIsSubmitting(true);
 
       const response =
-        await createSecondaryAdmin(
-          formData
-        );
+        await createSecondaryAdmin(formData);
 
       setSuccess(
         response?.message ||
           "Secondary Admin created successfully."
       );
 
-      navigate("/verify-email", {
-        state: {
-          email:
-            response?.email ||
-            formData.email
-              .trim()
-              .toLowerCase(),
-          fromAdminCreation: true,
-        },
-      });
-
+      navigate(
+        "/admin/create-secondary-admin/verify",
+        {
+          state: {
+            email:
+              response?.email ||
+              formData.email
+                .trim()
+                .toLowerCase(),
+          },
+        }
+      );
     } catch (requestError) {
       console.error(
         "Create Secondary Admin error:",
@@ -132,7 +124,6 @@ function CreateSecondaryAdmin() {
       setIsSubmitting(false);
     }
   };
-
 
   if (!isMainAdmin) {
     return (
@@ -163,7 +154,6 @@ function CreateSecondaryAdmin() {
     );
   }
 
-
   return (
     <AdminLayout role="main_admin">
       <div className="mx-auto max-w-2xl">
@@ -177,7 +167,6 @@ function CreateSecondaryAdmin() {
             Back to Admin Management
           </Link>
         </div>
-
 
         <motion.div
           initial={{
@@ -211,7 +200,6 @@ function CreateSecondaryAdmin() {
             </div>
           </div>
 
-
           <form
             onSubmit={handleSubmit}
             className="p-6 sm:p-8"
@@ -228,7 +216,6 @@ function CreateSecondaryAdmin() {
                 {success}
               </div>
             )}
-
 
             <div className="space-y-5">
 
@@ -248,7 +235,6 @@ function CreateSecondaryAdmin() {
                 />
               </div>
 
-
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Email
@@ -265,7 +251,6 @@ function CreateSecondaryAdmin() {
                 />
               </div>
 
-
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Phone
@@ -281,7 +266,6 @@ function CreateSecondaryAdmin() {
                   className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none transition focus:border-blue-400 disabled:bg-slate-50"
                 />
               </div>
-
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -324,7 +308,6 @@ function CreateSecondaryAdmin() {
 
                 </div>
               </div>
-
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -371,7 +354,6 @@ function CreateSecondaryAdmin() {
               </div>
 
             </div>
-
 
             <div className="mt-8 flex gap-3">
 
