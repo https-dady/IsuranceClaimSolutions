@@ -193,6 +193,8 @@ const uploadDocuments = async (req, res) => {
         const queryId =
             req.body.queryId || null;
 
+        let queryObjectId = null;
+
         if (queryId) {
             const queryConditions = [
                 { queryId: queryId },
@@ -220,6 +222,9 @@ const uploadDocuments = async (req, res) => {
                         "Query not found or you do not have access to it"
                 });
             }
+
+            // Convert user-facing queryId to MongoDB ObjectId
+            queryObjectId = query._id;
         }
 
         const documents =
@@ -227,7 +232,7 @@ const uploadDocuments = async (req, res) => {
                 files: req.files,
                 documentTypes,
                 userId: req.user.userId,
-                queryId
+                queryId:queryObjectId
             });
 
         return res.status(201).json({
