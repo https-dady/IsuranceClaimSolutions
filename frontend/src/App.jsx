@@ -1,5 +1,5 @@
 import { useLocation } from "react-router-dom";
-
+import Header from "./components/Header";
 import Navbar from "./components/layout/Navbar";
 import Footer from "./components/layout/Footer";
 import AppRoutes from "./routes/AppRoutes";
@@ -16,10 +16,12 @@ function AppContent() {
       <ScrollToTop />
 
       {/* Normal Website Navbar */}
+      {!isAdminPage && <Header />}
       {!isAdminPage && <Navbar />}
 
       {/* Page Routes */}
       <main className="flex-1">
+      
         <AppRoutes />
       </main>
 
